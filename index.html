@@ -144,7 +144,35 @@ function loadData(){return []}
 let isAdmin=false;
 function setMode(admin){isAdmin=!!admin;document.body.classList.toggle('admin',isAdmin);document.body.classList.toggle('public',!isAdmin);$('newShipment').style.display=isAdmin?'inline-flex':'none';$('exportCsv').style.display=isAdmin?'inline-flex':'none';$('restoreBtn').style.display=isAdmin?'inline-flex':'none';$('backupBtn').style.display=isAdmin?'inline-flex':'none';$('restoreFile').style.display='none';$('lastUpdated').textContent=isAdmin?'Espace administrateur':'Consultation publique';}
 async function loadFromSupabase(){if(!isAdmin)return loadPublicShipments();const {data,error}=await db.from('shipments').select('*').order('created_at',{ascending:false});if(error){console.error(error);notify('Erreur Supabase : '+error.message);return false}shipments=(data||[]).map(s=>({...s,container:s.container||s.reference||'',articleNames:s.article_names??'',originPort:s.origin_port??s.origin??'',destPort:s.dest_port??'',goods:s.goods??s.product??'',orderDate:s.order_date??'',loadDate:s.load_date??'',actualArrival:s.actual_arrival??'',surestariesStartDate:s.surestaries_start_date??'',terminalOutDate:s.terminal_out_date??'',freeDays:s.free_days??'',dailyRate:s.daily_rate??'',containerCount:s.container_count??1,updatedAt:s.updated_at??s.created_at}));$('lastUpdated').textContent='Données Supabase : '+new Date().toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'});render();return true}
-async function loadPublicShipments(){const {data,error}=await db.from('shipments_public').select('id,supplier,article_reference,quantity,unit,reference,status');if(error){console.error(error);notify('Impossible de charger les données publiques : '+error.message);return false}shipments=(data||[]).map(s=>({id:s.id,ref:s.article_reference||'',supplier:s.supplier||'',container:s.reference||'',quantity:s.quantity??'',unit:s.unit||'',status:s.status||'Commandée',mode:'',originPort:'',destPort:'',eta:'',goods:''}));renderPublic();return true}
+async function loadPublicShipments(){
+  const {data,error}=await db.from('shipments_public')
+    .select('id,supplier,article_reference,article_names,quantity,unit,reference,status');
+
+  if(error){
+    console.error(error);
+    notify('Impossible de charger les données publiques : '+error.message);
+    return false;
+  }
+
+  shipments=(data||[]).map(s=>({
+    id:s.id,
+    ref:s.article_reference||'',
+    supplier:s.supplier||'',
+    articleNames:s.article_names||'',
+    container:s.reference||'',
+    quantity:s.quantity??'',
+    unit:s.unit||'',
+    status:s.status||'Commandée',
+    mode:'',
+    originPort:'',
+    destPort:'',
+    eta:'',
+    goods:''
+  }));
+
+  renderPublic();
+  return true;
+}{const {data,error}=await db.from('shipments_public').select('id,supplier,article_reference,quantity,unit,reference,status');if(error){console.error(error);notify('Impossible de charger les données publiques : '+error.message);return false}shipments=(data||[]).map(s=>({id:s.id,ref:s.article_reference||'',supplier:s.supplier||'',container:s.reference||'',quantity:s.quantity??'',unit:s.unit||'',status:s.status||'Commandée',mode:'',originPort:'',destPort:'',eta:'',goods:''}));renderPublic();return true}
 function renderPublic(){const rows=shipments.slice();const q=$('search').value.trim().toLocaleLowerCase('fr');const filtered=q?rows.filter(s=>[s.ref,s.supplier,s.container].some(v=>String(v||'').toLocaleLowerCase('fr').includes(q))):rows;$('listCount').textContent=${filtered.length} chargement(s);$('footerCount').textContent=Affichage de ${filtered.length} chargement(s);$('emptyState').style.display=filtered.length?'none':'block';document.querySelector('.table-wrap').style.display=filtered.length?'block':'none';$('shipmentRows').innerHTML=filtered.map(s=><tr><td><div class="ref">${escapeHtml(s.ref||'—')}</div><div class="supplier">${escapeHtml(s.supplier||'—')}</div></td><td></td><td><div style="font-weight:650;font-size:12px">${escapeHtml(s.container||'—')}</div></td><td><div class="quantity">${s.quantity!==''?Number(s.quantity).toLocaleString('fr-FR'): '—'} <span class="qty-unit">${escapeHtml(s.unit)}</span></div></td><td></td><td></td><td><span class="status ${STATUS_CLASS[s.status]||'s-commandee'}">${escapeHtml(s.status)}</span></td><td></td></tr>).join('');}
 
 async function persist(){if(!isAdmin){notify('Connexion administrateur requise.');return false}try{const payload=shipments.map(s=>({id:s.id,ref:s.ref,reference:s.container||'',origin:s.originPort||'',product:s.goods||'',supplier:s.supplier,country:s.country,mode:s.mode,incoterm:s.incoterm,goods:s.goods,article_names:s.articleNames||'',quantity:s.quantity===''?null:s.quantity,unit:s.unit,container:s.container,bl:s.bl,invoice:s.invoice,origin_port:s.originPort,dest_port:s.destPort,transporter:s.transporter,order_date:s.orderDate||null,load_date:s.loadDate||null,etd:s.etd||null,eta:s.eta||null,actual_arrival:s.actualArrival||null,status:s.status,surestaries_start_date:s.surestariesStartDate||null,terminal_out_date:s.terminalOutDate||null,free_days:s.freeDays===''?null:s.freeDays,daily_rate:s.dailyRate===''?null:s.dailyRate,container_count:s.containerCount||1,currency:s.currency||'MAD',notes:s.notes||'',updated_at:new Date().toISOString()}));if(payload.length){const {error}=await db.from('shipments').upsert(payload,{onConflict:'id'});if(error)throw error} $('lastUpdated').textContent='Dernière sauvegarde Supabase : '+new Date().toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'});return true}catch(e){console.error(e);notify('Erreur Supabase : '+e.message);return false}}
