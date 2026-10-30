@@ -126,183 +126,1000 @@
 <div class="toast" id="toast" role="status"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-window.SUPABASE_URL='https://mnyokiniupvtzesdmwit.supabase.co';
-window.SUPABASE_ANON_KEY='sb_publishable_-HIf7IptcZ1as_TXkn5SCQ_Fx6lPnbi';
-window.supabaseClient=window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
+window.SUPABASE_URL = 'https://mnyokiniupvtzesdmwit.supabase.co';
+window.SUPABASE_ANON_KEY = 'sb_publishable_-HIf7IptcZ1as_TXkn5SCQ_Fx6lPnbi';
+window.supabaseClient = window.supabase.createClient(
+  window.SUPABASE_URL,
+  window.SUPABASE_ANON_KEY
+);
 </script>
-<script>
-(function(){
-'use strict';
-const STORAGE_KEY='suiviImportData_v1';
-  const db=window.supabaseClient;
-const STATUSES=['Commandée','En préparation','Chargé','En transit','Arrivé au port','Dédouanement','En livraison','Livré','Bloqué'];
-const STATUS_CLASS={'Commandée':'s-commandee','En préparation':'s-preparation','Chargé':'s-charge','En transit':'s-transit','Arrivé au port':'s-port','Dédouanement':'s-douane','En livraison':'s-livraison','Livré':'s-livree','Bloqué':'s-bloque'};
-let shipments=loadData(), editingId=null, toastTimer=null;
-const $=id=>document.getElementById(id);
-const todayISO=()=>{const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10)};
-function loadData(){return []}
-let isAdmin=false;
-function setMode(admin){isAdmin=!!admin;document.body.classList.toggle('admin',isAdmin);document.body.classList.toggle('public',!isAdmin);$('newShipment').style.display=isAdmin?'inline-flex':'none';$('exportCsv').style.display=isAdmin?'inline-flex':'none';$('restoreBtn').style.display=isAdmin?'inline-flex':'none';$('backupBtn').style.display=isAdmin?'inline-flex':'none';$('restoreFile').style.display='none';$('lastUpdated').textContent=isAdmin?'Espace administrateur':'Consultation publique';}
-async function loadFromSupabase(){if(!isAdmin)return loadPublicShipments();const {data,error}=await db.from('shipments').select('*').order('created_at',{ascending:false});if(error){console.error(error);notify('Erreur Supabase : '+error.message);return false}shipments=(data||[]).map(s=>({...s,container:s.container||s.reference||'',articleNames:s.article_names??'',originPort:s.origin_port??s.origin??'',destPort:s.dest_port??'',goods:s.goods??s.product??'',orderDate:s.order_date??'',loadDate:s.load_date??'',actualArrival:s.actual_arrival??'',surestariesStartDate:s.surestaries_start_date??'',terminalOutDate:s.terminal_out_date??'',freeDays:s.free_days??'',dailyRate:s.daily_rate??'',containerCount:s.container_count??1,updatedAt:s.updated_at??s.created_at}));$('lastUpdated').textContent='Données Supabase : '+new Date().toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'});render();return true}
-async function loadPublicShipments(){
-  const {data,error}=await db.from('shipments_public')
-    .select('id,supplier,article_reference,article_names,quantity,unit,reference,status');
 
-  if(error){
-    console.error(error);
-    notify('Impossible de charger les données publiques : '+error.message);
-    return false;
+<script>
+(function () {
+  'use strict';
+
+  const db = window.supabaseClient;
+  const STATUSES = [
+    'Commandée', 'En préparation', 'Chargé', 'En transit',
+    'Arrivé au port', 'Dédouanement', 'En livraison', 'Livré', 'Bloqué'
+  ];
+  const STATUS_CLASS = {
+    'Commandée': 's-commandee',
+    'En préparation': 's-preparation',
+    'Chargé': 's-charge',
+    'En transit': 's-transit',
+    'Arrivé au port': 's-port',
+    'Dédouanement': 's-douane',
+    'En livraison': 's-livraison',
+    'Livré': 's-livree',
+    'Bloqué': 's-bloque'
+  };
+
+  let shipments = [];
+  let editingId = null;
+  let toastTimer = null;
+  let isAdmin = false;
+
+  const $ = id => document.getElementById(id);
+
+  const todayISO = () => {
+    const d = new Date();
+    return new Date(d.getTime() - d.getTimezoneOffset() * 60000)
+      .toISOString().slice(0, 10);
+  };
+
+  function notify(message) {
+    const toast = $('toast');
+    if (!toast) return;
+    toast.textContent = message;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2600);
   }
 
-  shipments=(data||[]).map(s=>({
-    id:s.id,
-    ref:s.article_reference||'',
-    supplier:s.supplier||'',
-    articleNames:s.article_names||'',
-    container:s.reference||'',
-    quantity:s.quantity??'',
-    unit:s.unit||'',
-    status:s.status||'Commandée',
-    mode:'',
-    originPort:'',
-    destPort:'',
-    eta:'',
-    goods:''
-  }));
-
-  renderPublic();
-  return true;
-}{const {data,error}=await db.from('shipments_public').select('id,supplier,article_reference,quantity,unit,reference,status');if(error){console.error(error);notify('Impossible de charger les données publiques : '+error.message);return false}shipments=(data||[]).map(s=>({id:s.id,ref:s.article_reference||'',supplier:s.supplier||'',container:s.reference||'',quantity:s.quantity??'',unit:s.unit||'',status:s.status||'Commandée',mode:'',originPort:'',destPort:'',eta:'',goods:''}));renderPublic();return true}
-function renderPublic(){const rows=shipments.slice();const q=$('search').value.trim().toLocaleLowerCase('fr');const filtered=q?rows.filter(s=>[s.ref,s.supplier,s.container].some(v=>String(v||'').toLocaleLowerCase('fr').includes(q))):rows;$('listCount').textContent=${filtered.length} chargement(s);$('footerCount').textContent=Affichage de ${filtered.length} chargement(s);$('emptyState').style.display=filtered.length?'none':'block';document.querySelector('.table-wrap').style.display=filtered.length?'block':'none';$('shipmentRows').innerHTML=filtered.map(s=><tr><td><div class="ref">${escapeHtml(s.ref||'—')}</div><div class="supplier">${escapeHtml(s.supplier||'—')}</div></td><td></td><td><div style="font-weight:650;font-size:12px">${escapeHtml(s.container||'—')}</div></td><td><div class="quantity">${s.quantity!==''?Number(s.quantity).toLocaleString('fr-FR'): '—'} <span class="qty-unit">${escapeHtml(s.unit)}</span></div></td><td></td><td></td><td><span class="status ${STATUS_CLASS[s.status]||'s-commandee'}">${escapeHtml(s.status)}</span></td><td></td></tr>).join('');}
-
-async function persist(){if(!isAdmin){notify('Connexion administrateur requise.');return false}try{const payload=shipments.map(s=>({id:s.id,ref:s.ref,reference:s.container||'',origin:s.originPort||'',product:s.goods||'',supplier:s.supplier,country:s.country,mode:s.mode,incoterm:s.incoterm,goods:s.goods,article_names:s.articleNames||'',quantity:s.quantity===''?null:s.quantity,unit:s.unit,container:s.container,bl:s.bl,invoice:s.invoice,origin_port:s.originPort,dest_port:s.destPort,transporter:s.transporter,order_date:s.orderDate||null,load_date:s.loadDate||null,etd:s.etd||null,eta:s.eta||null,actual_arrival:s.actualArrival||null,status:s.status,surestaries_start_date:s.surestariesStartDate||null,terminal_out_date:s.terminalOutDate||null,free_days:s.freeDays===''?null:s.freeDays,daily_rate:s.dailyRate===''?null:s.dailyRate,container_count:s.containerCount||1,currency:s.currency||'MAD',notes:s.notes||'',updated_at:new Date().toISOString()}));if(payload.length){const {error}=await db.from('shipments').upsert(payload,{onConflict:'id'});if(error)throw error} $('lastUpdated').textContent='Dernière sauvegarde Supabase : '+new Date().toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'});return true}catch(e){console.error(e);notify('Erreur Supabase : '+e.message);return false}}
-function uid(){return crypto.randomUUID()}
-function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function fmtDate(v){if(!v)return '—';const d=new Date(v+'T00:00:00');return isNaN(d)?'—':d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'}).replace('.','')}
-function daysLate(s){return s.status!=='Livré'&&s.eta&&s.eta<todayISO()&&!s.actualArrival?true:false}
-function dayDifference(start,end){if(!start||!end)return 0;const a=Date.parse(start+'T00:00:00Z'),b=Date.parse(end+'T00:00:00Z');if(!Number.isFinite(a)||!Number.isFinite(b))return 0;return Math.round((b-a)/86400000)}
-function calcSurestaries(s){const start=s.surestariesStartDate||'';const end=s.terminalOutDate||todayISO();const hasFree=s.freeDays!==''&&s.freeDays!=null&&Number.isFinite(Number(s.freeDays))&&Number(s.freeDays)>=0;const hasRate=s.dailyRate!==''&&s.dailyRate!=null&&Number.isFinite(Number(s.dailyRate))&&Number(s.dailyRate)>=0;const hasStart=Boolean(start);const totalDays=hasStart?Math.max(0,dayDifference(start,end)+1):0;const freeDays=hasFree?Math.floor(Number(s.freeDays)):null;const chargeableDays=hasStart&&hasFree?Math.max(0,totalDays-freeDays):0;const count=Math.max(1,Math.floor(Number(s.containerCount)||1));const rate=hasRate?Number(s.dailyRate):null;const amount=hasRate&&hasStart&&hasFree?chargeableDays*rate*count:null;return {hasStart,hasFree,hasRate,configured:hasStart&&hasFree,totalDays,freeDays,chargeableDays,count,rate,amount,currency:s.currency||'MAD',end,ongoing:hasStart&&!s.terminalOutDate};}
-function fmtMoney(value,currency){if(value==null||!Number.isFinite(Number(value)))return 'À calculer';return Number(value).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' '+(currency||'MAD')}
-function surestariesLabel(s){const c=calcSurestaries(s);if(!c.hasStart)return '—';if(!c.hasFree)return '<span class="subtext">Franchise à renseigner</span>';if(!c.hasRate&&c.chargeableDays>0)return <span class="surestaries-chip">${c.chargeableDays} j facturables</span><div class="subtext">Tarif manquant</div>;if(c.amount!=null&&c.amount>0)return <div class="money-main">${escapeHtml(fmtMoney(c.amount,c.currency))}</div><div class="subtext">${c.chargeableDays} j × ${c.count} cont.</div>;if(c.chargeableDays===0)return <span class="surestaries-chip clear">Franchise en cours</span>;return '—';}
-function isActive(s){return s.status!=='Livré'}
-function isInTransit(s){return ['Chargé','En transit','Arrivé au port'].includes(s.status)}
-function notify(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2600)}
-function setStatusOptions(){ $('fStatus').innerHTML=STATUSES.map(s=><option>${escapeHtml(s)}</option>).join(''); $('statusFilter').innerHTML='<option value="">Tous les statuts</option>'+STATUSES.map(s=><option>${escapeHtml(s)}</option>).join('') }
-function renderPublic(){
-  const rows=shipments.slice();
-  const q=$('search').value.trim().toLocaleLowerCase('fr');
-
-  const filtered=q?rows.filter(s=>
-    [s.ref,s.supplier,s.container,s.articleNames]
-    .some(v=>String(v||'').toLocaleLowerCase('fr').includes(q))
-  ):rows;
-
-  $('listCount').textContent=`${filtered.length} chargement(s)`;
-  $('footerCount').textContent=`Affichage de ${filtered.length} chargement(s)`;
-  $('emptyState').style.display=filtered.length?'none':'block';
-  document.querySelector('.table-wrap').style.display=filtered.length?'block':'none';
-
-  $('shipmentRows').innerHTML=filtered.map(s=>`
-    <tr>
-      <td>
-        <div class="ref">${escapeHtml(s.ref||'—')}</div>
-        <div class="supplier">${escapeHtml(s.supplier||'—')}</div>
-        <div class="subtext" style="margin-top:7px;font-weight:700;color:#3157d5">
-          ARTICLES :
-        </div>
-        <div style="white-space:pre-line;font-size:12px;line-height:1.7;max-width:300px">
-          ${escapeHtml(s.articleNames||'Articles non renseignés')}
-        </div>
-      </td>
-      <td></td>
-      <td>
-        <div style="font-weight:650;font-size:12px">
-          ${escapeHtml(s.container||'—')}
-        </div>
-      </td>
-      <td>
-        <div class="quantity">
-          ${s.quantity!==''?Number(s.quantity).toLocaleString('fr-FR'):'—'}
-          <span class="qty-unit">${escapeHtml(s.unit)}</span>
-        </div>
-      </td>
-      <td></td>
-      <td></td>
-      <td>
-        <span class="status ${STATUS_CLASS[s.status]||'s-commandee'}">
-          ${escapeHtml(s.status)}
-        </span>
-      </td>
-      <td></td>
-    </tr>
-  `).join('');
-}
- const active=shipments.filter(isActive).length, transit=shipments.filter(isInTransit).length, customs=shipments.filter(s=>s.status==='Dédouanement').length, late=shipments.filter(daysLate).length;
- const surestariesActive=shipments.filter(s=>{const c=calcSurestaries(s);return c.ongoing&&c.configured&&c.chargeableDays>0}).length;
- $('metricActive').textContent=active;$('metricTransit').textContent=transit;$('metricCustoms').textContent=customs;$('metricLate').textContent=late;$('lateMetric').classList.toggle('alert',late>0);$('metricSurestaries').textContent=surestariesActive;$('surestariesMetric').classList.toggle('alert',surestariesActive>0);
- renderAlerts();
- let rows=shipments.slice();const q=$('search').value.trim().toLocaleLowerCase('fr');const status=$('statusFilter').value;const mode=$('modeFilter').value;
- if(q)rows=rows.filter(s=>[s.ref,s.supplier,s.container,s.bl,s.goods,s.articleNames,s.country,s.invoice,s.originPort,s.destPort,s.transporter].some(v=>String(v||'').toLocaleLowerCase('fr').includes(q)));
- if(status)rows=rows.filter(s=>s.status===status);if(mode)rows=rows.filter(s=>s.mode===mode);
- const sort=$('sortFilter').value;if(sort==='eta')rows.sort((a,b)=>(a.eta||'9999').localeCompare(b.eta||'9999'));else if(sort==='newest')rows.sort((a,b)=>(b.updatedAt||b.createdAt||'').localeCompare(a.updatedAt||a.createdAt||''));else rows.sort((a,b)=>(a.supplier||'').localeCompare(b.supplier||'','fr'));
- $('listCount').textContent=${rows.length} chargement${rows.length!==1?'s':''} affiché${rows.length!==1?'s':''};$('footerCount').textContent=Affichage de ${rows.length} sur ${shipments.length} chargement${shipments.length!==1?'s':''};
- $('emptyState').style.display=rows.length?'none':'block';document.querySelector('.table-wrap').style.display=rows.length?'block':'none';
- $('shipmentRows').innerHTML=rows.map(s=>{
-   const route=[s.originPort,s.destPort].filter(Boolean);const routeText=route.length?route.map(escapeHtml).join(' → '):'Trajet à préciser';
-   const quant=s.quantity!==''&&s.quantity!=null?${Number(s.quantity).toLocaleString('fr-FR',{maximumFractionDigits:2})} <span class="qty-unit">${escapeHtml(s.unit||'m²')}</span>:'—';
-   const lateLabel=daysLate(s)?<span class="late">En retard (${dayDifference(s.eta,todayISO())} j)</span>:'';
-   const surestariesText=surestariesLabel(s);
-   const articlePreview=String(s.articleNames||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean).slice(0,2).join(' · ');
-   return <tr><td><div class="ref">${escapeHtml(s.ref||'Sans référence')}</div><div class="supplier">${escapeHtml(s.supplier||'Fournisseur non précisé')}</div><div class="subtext">${escapeHtml(s.goods||s.country||'')}</div>${articlePreview?<div class="subtext" title="${escapeHtml(s.articleNames)}" style="max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Articles : ${escapeHtml(articlePreview)}</div>:''}</td><td><div class="route">${routeText}</div><div class="subtext">${escapeHtml(s.mode||'')} ${s.incoterm?'· '+escapeHtml(s.incoterm):''}</div></td><td><div style="font-weight:650;font-size:12px">${escapeHtml(s.container||'—')}</div></td><td><div class="quantity">${quant}</div></td><td><div class="date">${fmtDate(s.eta)}</div>${lateLabel}</td><td>${surestariesText}</td><td><span class="status ${STATUS_CLASS[s.status]||'s-commandee'}">${escapeHtml(s.status||'Commandée')}</span></td><td><div class="row-actions"><button class="icon-btn" data-action="edit" data-id="${escapeHtml(s.id)}" title="Modifier" aria-label="Modifier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m14 5 5 5M4 20l4-.8L19 8a2.1 2.1 0 0 0-3-3L5 16l-1 4Z"/></svg></button><button class="icon-btn" data-action="delete" data-id="${escapeHtml(s.id)}" title="Supprimer" aria-label="Supprimer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M10 11v6M14 11v6M5 7l1 14h12l1-14M9 7V4h6v3"/></svg></button></div></td></tr>;
- }).join('');
-}
-function renderAlerts(){const alerts=[];const today=todayISO();shipments.forEach(s=>{const label=${s.ref||'Sans référence'} — ${s.supplier||'Fournisseur non précisé'};if(daysLate(s)){const delay=dayDifference(s.eta,today);alerts.push({level:'danger',title:'Retard d’arrivée',text:${label} : arrivée prévue le ${fmtDate(s.eta)}, dépassée de ${delay} jour(s).})}const c=calcSurestaries(s);if(c.hasStart&&!c.hasFree){alerts.push({level:'warning',title:'Franchise à renseigner',text:${label} : indiquez le nombre de jours gratuits prévu par le transporteur pour activer le calcul.});return}if(!c.configured)return;if(c.ongoing&&c.chargeableDays>0){const amount=c.hasRate? Coût estimé à ce jour : ${fmtMoney(c.amount,c.currency)}.:' Renseignez le tarif journalier pour calculer le montant.';alerts.push({level:'danger',title:'Surestaries en cours',text:${label} : ${c.chargeableDays} jour(s) facturable(s) pour ${c.count} conteneur(s).${amount}})}else if(c.ongoing&&c.chargeableDays===0&&c.freeDays>0&&c.totalDays>=Math.max(1,c.freeDays-1)){const left=Math.max(0,c.freeDays-c.totalDays);alerts.push({level:'warning',title:left===0?'Franchise échue aujourd’hui':'Franchise bientôt échue',text:${label} : ${left===0?'le dernier jour gratuit est atteint.':'il reste environ '+left+' jour(s) de franchise.'} Vérifiez la date de sortie du terminal.})}});const panel=$('alertPanel'),list=$('alertList');if(!alerts.length){panel.hidden=true;list.innerHTML='';return}panel.hidden=false;$('alertSummary').textContent=${alerts.length} alerte(s) nécessitent votre attention.;list.innerHTML=alerts.map(a=><article class="alert-item ${a.level}"><strong>${escapeHtml(a.title)}</strong><p>${escapeHtml(a.text)}</p></article>).join('')}
-function updateSurestariesPreview(){const c=calcSurestaries({surestariesStartDate:$('fSurestariesStartDate').value,terminalOutDate:$('fTerminalOutDate').value,freeDays:$('fFreeDays').value,dailyRate:$('fDailyRate').value,containerCount:$('fContainerCount').value,currency:$('fCurrency').value});$('previewChargeDays').textContent=c.hasStart&&c.hasFree?${c.chargeableDays} jour(s):'À renseigner';$('previewChargeAmount').textContent=c.amount==null?'À calculer':fmtMoney(c.amount,c.currency);$('previewUntil').textContent=c.hasStart?fmtDate(c.end):'—'}
-function openModal(id){if(!isAdmin){notify('Connexion administrateur requise.');return}editingId=id||null;const form=$('shipmentForm');form.reset();const s=id?shipments.find(x=>x.id===id):null;$('modalTitle').textContent=s?'Modifier le chargement':'Nouveau chargement';$('deleteShipment').style.display=s?'inline-flex':'none';
- const vals={fRef:s?.ref||makeRef(),fSupplier:s?.supplier||'',fCountry:s?.country||'',fMode:s?.mode||'Maritime',fIncoterm:s?.incoterm||'',fGoods:s?.goods||'',fArticleNames:s?.articleNames||'',fQuantity:s?.quantity??'',fUnit:s?.unit||'m²',fContainer:s?.container||'',fBl:s?.bl||'',fInvoice:s?.invoice||'',fOriginPort:s?.originPort||'',fDestPort:s?.destPort||'',fTransporter:s?.transporter||'',fOrderDate:s?.orderDate||todayISO(),fLoadDate:s?.loadDate||'',fEtd:s?.etd||'',fEta:s?.eta||'',fActualArrival:s?.actualArrival||'',fStatus:s?.status||'Commandée',fSurestariesStartDate:s?.surestariesStartDate||'',fTerminalOutDate:s?.terminalOutDate||'',fFreeDays:s?.freeDays??'',fDailyRate:s?.dailyRate??'',fContainerCount:s?.containerCount??1,fCurrency:s?.currency||'MAD',fNotes:s?.notes||''};
- Object.entries(vals).forEach(([id,v])=>$(id).value=v);$('modalOverlay').classList.add('open');document.body.style.overflow='hidden';updateSurestariesPreview();setTimeout(()=>$('fSupplier').focus(),40)}
-function closeModal(){ $('modalOverlay').classList.remove('open');document.body.style.overflow='';editingId=null }
-function makeRef(){const y=new Date().getFullYear();let n=shipments.length+1;let ref;do{ref=IMP-${y}-${String(n).padStart(3,'0')};n++}while(shipments.some(s=>s.ref===ref));return ref}
-function fieldData(){const names={ref:'fRef',supplier:'fSupplier',country:'fCountry',mode:'fMode',incoterm:'fIncoterm',goods:'fGoods',articleNames:'fArticleNames',quantity:'fQuantity',unit:'fUnit',container:'fContainer',bl:'fBl',invoice:'fInvoice',originPort:'fOriginPort',destPort:'fDestPort',transporter:'fTransporter',orderDate:'fOrderDate',loadDate:'fLoadDate',etd:'fEtd',eta:'fEta',actualArrival:'fActualArrival',status:'fStatus',surestariesStartDate:'fSurestariesStartDate',terminalOutDate:'fTerminalOutDate',freeDays:'fFreeDays',dailyRate:'fDailyRate',containerCount:'fContainerCount',currency:'fCurrency',notes:'fNotes'};const out={};for(const[k,id]of Object.entries(names))out[k]=$(id).value.trim();out.quantity=out.quantity===''?'':Number(out.quantity);out.freeDays=out.freeDays===''?'':Number(out.freeDays);out.dailyRate=out.dailyRate===''?'':Number(out.dailyRate);out.containerCount=out.containerCount===''?1:Number(out.containerCount);return out}
-$('shipmentForm').addEventListener('submit',e=>{e.preventDefault();const wasEditing=Boolean(editingId);const f=fieldData();const dupe=shipments.some(s=>s.ref.toLocaleLowerCase()===f.ref.toLocaleLowerCase()&&s.id!==editingId);if(dupe){notify('Cette référence existe déjà. Choisissez une autre référence.');$('fRef').focus();return}const now=new Date().toISOString();if(editingId){const i=shipments.findIndex(s=>s.id===editingId);if(i>=0)shipments[i]={...shipments[i],...f,updatedAt:now}}else shipments.unshift({...f,id:uid(),createdAt:now,updatedAt:now});persist().then(ok=>{if(ok){render();closeModal();notify(wasEditing?'Chargement mis à jour.':'Chargement ajouté.')}})});
-async function deleteShipment(id){if(!isAdmin){notify('Connexion administrateur requise.');return}const s=shipments.find(x=>x.id===id);if(!s)return;if(!confirm(Supprimer le chargement ${s.ref||''} ? Cette action est définitive.))return;const {error}=await db.from('shipments').delete().eq('id',id);if(error){notify('Erreur Supabase : '+error.message);return}shipments=shipments.filter(x=>x.id!==id);render();closeModal();notify('Chargement supprimé.')}
-$('shipmentRows').addEventListener('click',e=>{const b=e.target.closest('button[data-action]');if(!b)return;if(b.dataset.action==='edit')openModal(b.dataset.id);if(b.dataset.action==='delete')deleteShipment(b.dataset.id)});
-$('newShipment').addEventListener('click',()=>openModal());$('emptyAdd').addEventListener('click',()=>openModal());$('closeModal').addEventListener('click',closeModal);$('cancelModal').addEventListener('click',closeModal);$('modalOverlay').addEventListener('click',e=>{if(e.target===$('modalOverlay'))closeModal()});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('modalOverlay').classList.contains('open'))closeModal()});$('deleteShipment').addEventListener('click',()=>{if(editingId)deleteShipment(editingId)});
-['search','statusFilter','modeFilter','sortFilter'].forEach(id=>$(id).addEventListener(id==='search'?'input':'change',()=>isAdmin?render():renderPublic()));$('resetFilters').addEventListener('click',()=>{$('search').value='';$('statusFilter').value='';$('modeFilter').value='';$('sortFilter').value='eta';render()});
-function download(name,content,type){const blob=new Blob([content],{type});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)}
-function csvEscape(x){const v=String(x??'');return '"'+v.replace(/"/g,'""')+'"'}
-$('exportCsv').addEventListener('click',()=>{const headers=['Référence','Fournisseur','Pays origine','Transport','Incoterm','Marchandise / catégorie','Noms des articles','Quantité totale','Unité','Conteneur','BL','Facture','Départ','Destination','Transitaire','Date commande','Date chargement','ETD','ETA','Arrivée réelle','Statut','Début compteur surestaries','Sortie terminal','Franchise (jours)','Tarif/jour/conteneur','Nombre conteneurs','Devise','Notes'];const keys=['ref','supplier','country','mode','incoterm','goods','articleNames','quantity','unit','container','bl','invoice','originPort','destPort','transporter','orderDate','loadDate','etd','eta','actualArrival','status','surestariesStartDate','terminalOutDate','freeDays','dailyRate','containerCount','currency','notes'];const csv='\ufeff'+[headers,...shipments.map(s=>keys.map(k=>s[k]??''))].map(row=>row.map(csvEscape).join(';')).join('\r\n');download(suivi-import-${todayISO()}.csv,csv,'text/csv;charset=utf-8;');notify('Export CSV prêt à être ouvert dans Excel.')});
-$('backupBtn').addEventListener('click',()=>{download(sauvegarde-suivi-import-${todayISO()}.json,JSON.stringify({app:'Suivi Import',version:1,exportedAt:new Date().toISOString(),shipments},null,2),'application/json');notify('Sauvegarde téléchargée.')});
-$('restoreBtn').addEventListener('click',()=>$('restoreFile').click());
-$('restoreFile').addEventListener('change',async e=>{const file=e.target.files?.[0];if(!file)return;try{const obj=JSON.parse(await file.text());const arr=Array.isArray(obj)?obj:obj.shipments;if(!Array.isArray(arr))throw new Error('Format non reconnu');if(!confirm(Importer ${arr.length} chargement(s) ? Les références déjà présentes seront remplacées par celles de la sauvegarde.))return;const map=new Map(shipments.map(s=>[s.ref,s]));arr.forEach(s=>{if(!s||!s.ref||!s.supplier)return;const existing=map.get(s.ref);map.set(s.ref,{...existing,...s,id:existing?.id||s.id||uid(),updatedAt:new Date().toISOString()})});shipments=Array.from(map.values());persist();render();notify('Sauvegarde importée avec succès.')}catch(err){notify('Fichier invalide. Choisissez une sauvegarde JSON Suivi Import.')}finally{e.target.value=''}});
-// Le calcul se met à jour immédiatement dans le formulaire.
-['fSurestariesStartDate','fTerminalOutDate','fFreeDays','fDailyRate','fContainerCount','fCurrency'].forEach(id=>$(id).addEventListener('input',updateSurestariesPreview));
-// Recalcule les retards lorsque l'application revient au premier plan.
-window.addEventListener('focus',render);
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)render()});
-$('adminLoginBtn').addEventListener('click',()=>$('loginOverlay').classList.add('open'));$('closeLogin').addEventListener('click',()=>$('loginOverlay').classList.remove('open'));$('cancelLogin').addEventListener('click',()=>$('loginOverlay').classList.remove('open'));$('loginOverlay').addEventListener('click',e=>{if(e.target===$('loginOverlay'))$('loginOverlay').classList.remove('open')});$('loginForm').addEventListener('submit',async e=>{e.preventDefault();$('loginError').textContent='';const {data,error}=await db.auth.signInWithPassword({email:$('loginEmail').value.trim(),password:$('loginPassword').value});if(error){$('loginError').textContent='Connexion impossible : '+error.message;return}$('loginOverlay').classList.remove('open');setMode(true);await loadFromSupabase();notify('Connexion administrateur réussie.');});$('logoutBtn').addEventListener('click',async()=>{await db.auth.signOut();setMode(false);shipments=[];await loadPublicShipments();notify('Déconnexion effectuée.');});
-db.auth.onAuthStateChange(async(_event,session)=>{const admin=!!session?.user;setMode(admin);if(admin)await loadFromSupabase();else await loadPublicShipments();});
-setStatusOptions();setMode(false);loadPublicShipments();
-})();
-</script>
-<script>
-(function(){
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function(){ navigator.serviceWorker.register('./sw.js').catch(function(){}); });
+  function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, char => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    })[char]);
   }
-  let deferredPrompt=null;
-  const btn=document.getElementById('installApp');
-  window.addEventListener('beforeinstallprompt', function(e){
-    e.preventDefault(); deferredPrompt=e; if(btn) btn.style.display='inline-flex';
+
+  function fmtDate(value) {
+    if (!value) return '—';
+    const d = new Date(value + 'T00:00:00');
+    return Number.isNaN(d.getTime())
+      ? '—'
+      : d.toLocaleDateString('fr-FR', {
+          day: '2-digit', month: 'short', year: 'numeric'
+        }).replace('.', '');
+  }
+
+  function daysLate(s) {
+    return s.status !== 'Livré' && !!s.eta &&
+      s.eta < todayISO() && !s.actualArrival;
+  }
+
+  function dayDifference(start, end) {
+    if (!start || !end) return 0;
+    const a = Date.parse(start + 'T00:00:00Z');
+    const b = Date.parse(end + 'T00:00:00Z');
+    if (!Number.isFinite(a) || !Number.isFinite(b)) return 0;
+    return Math.round((b - a) / 86400000);
+  }
+
+  function calcSurestaries(s) {
+    const start = s.surestariesStartDate || '';
+    const end = s.terminalOutDate || todayISO();
+    const hasFree = s.freeDays !== '' && s.freeDays != null &&
+      Number.isFinite(Number(s.freeDays)) && Number(s.freeDays) >= 0;
+    const hasRate = s.dailyRate !== '' && s.dailyRate != null &&
+      Number.isFinite(Number(s.dailyRate)) && Number(s.dailyRate) >= 0;
+    const hasStart = Boolean(start);
+    const totalDays = hasStart
+      ? Math.max(0, dayDifference(start, end) + 1)
+      : 0;
+    const freeDays = hasFree ? Math.floor(Number(s.freeDays)) : null;
+    const chargeableDays = hasStart && hasFree
+      ? Math.max(0, totalDays - freeDays)
+      : 0;
+    const count = Math.max(1, Math.floor(Number(s.containerCount) || 1));
+    const rate = hasRate ? Number(s.dailyRate) : null;
+    const amount = hasRate && hasStart && hasFree
+      ? chargeableDays * rate * count
+      : null;
+
+    return {
+      hasStart, hasFree, hasRate,
+      configured: hasStart && hasFree,
+      totalDays, freeDays, chargeableDays,
+      count, rate, amount,
+      currency: s.currency || 'MAD',
+      end,
+      ongoing: hasStart && !s.terminalOutDate
+    };
+  }
+
+  function fmtMoney(value, currency) {
+    if (value == null || !Number.isFinite(Number(value))) return 'À calculer';
+    return Number(value).toLocaleString('fr-FR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }) + ' ' + (currency || 'MAD');
+  }
+
+  function surestariesLabel(s) {
+    const c = calcSurestaries(s);
+    if (!c.hasStart) return '—';
+    if (!c.hasFree) return '<span class="subtext">Franchise à renseigner</span>';
+    if (!c.hasRate && c.chargeableDays > 0) {
+      return `<span class="surestaries-chip">${c.chargeableDays} j facturables</span>
+        <div class="subtext">Tarif manquant</div>`;
+    }
+    if (c.amount != null && c.amount > 0) {
+      return `<div class="money-main">${escapeHtml(fmtMoney(c.amount, c.currency))}</div>
+        <div class="subtext">${c.chargeableDays} j × ${c.count} cont.</div>`;
+    }
+    if (c.chargeableDays === 0) {
+      return '<span class="surestaries-chip clear">Franchise en cours</span>';
+    }
+    return '—';
+  }
+
+  function isActive(s) {
+    return s.status !== 'Livré';
+  }
+
+  function isInTransit(s) {
+    return ['Chargé', 'En transit', 'Arrivé au port'].includes(s.status);
+  }
+
+  function setMode(admin) {
+    isAdmin = !!admin;
+    document.body.classList.toggle('admin', isAdmin);
+    document.body.classList.toggle('public', !isAdmin);
+
+    const visibility = {
+      newShipment: isAdmin ? 'inline-flex' : 'none',
+      exportCsv: isAdmin ? 'inline-flex' : 'none',
+      restoreBtn: isAdmin ? 'inline-flex' : 'none',
+      backupBtn: isAdmin ? 'inline-flex' : 'none',
+      restoreFile: 'none'
+    };
+    Object.entries(visibility).forEach(([id, value]) => {
+      if ($(id)) $(id).style.display = value;
+    });
+
+    if ($('lastUpdated')) {
+      $('lastUpdated').textContent = isAdmin
+        ? 'Espace administrateur'
+        : 'Consultation publique';
+    }
+  }
+
+  function setStatusOptions() {
+    if ($('fStatus')) {
+      $('fStatus').innerHTML = STATUSES
+        .map(status => `<option value="${escapeHtml(status)}">${escapeHtml(status)}</option>`)
+        .join('');
+    }
+    if ($('statusFilter')) {
+      $('statusFilter').innerHTML =
+        '<option value="">Tous les statuts</option>' +
+        STATUSES.map(status =>
+          `<option value="${escapeHtml(status)}">${escapeHtml(status)}</option>`
+        ).join('');
+    }
+  }
+
+  async function loadPublicShipments() {
+    const { data, error } = await db
+      .from('shipments_public')
+      .select('id,supplier,article_reference,article_names,quantity,unit,reference,status');
+
+    if (error) {
+      console.error(error);
+      notify('Impossible de charger les données publiques : ' + error.message);
+      return false;
+    }
+
+    shipments = (data || []).map(s => ({
+      id: s.id,
+      ref: s.article_reference || '',
+      supplier: s.supplier || '',
+      articleNames: s.article_names || '',
+      container: s.reference || '',
+      quantity: s.quantity ?? '',
+      unit: s.unit || '',
+      status: s.status || 'Commandée',
+      mode: '',
+      originPort: '',
+      destPort: '',
+      eta: '',
+      goods: ''
+    }));
+
+    renderPublic();
+    return true;
+  }
+
+  async function loadFromSupabase() {
+    if (!isAdmin) return loadPublicShipments();
+
+    const { data, error } = await db
+      .from('shipments')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error(error);
+      notify('Erreur Supabase : ' + error.message);
+      return false;
+    }
+
+    shipments = (data || []).map(s => ({
+      ...s,
+      ref: s.ref || '',
+      container: s.container || s.reference || '',
+      articleNames: s.article_names ?? '',
+      originPort: s.origin_port ?? s.origin ?? '',
+      destPort: s.dest_port ?? '',
+      goods: s.goods ?? s.product ?? '',
+      orderDate: s.order_date ?? '',
+      loadDate: s.load_date ?? '',
+      actualArrival: s.actual_arrival ?? '',
+      surestariesStartDate: s.surestaries_start_date ?? '',
+      terminalOutDate: s.terminal_out_date ?? '',
+      freeDays: s.free_days ?? '',
+      dailyRate: s.daily_rate ?? '',
+      containerCount: s.container_count ?? 1,
+      updatedAt: s.updated_at ?? s.created_at ?? '',
+      createdAt: s.created_at ?? ''
+    }));
+
+    if ($('lastUpdated')) {
+      $('lastUpdated').textContent =
+        'Données Supabase : ' +
+        new Date().toLocaleString('fr-FR', {
+          dateStyle: 'short', timeStyle: 'short'
+        });
+    }
+    render();
+    return true;
+  }
+
+  async function persist() {
+    if (!isAdmin) {
+      notify('Connexion administrateur requise.');
+      return false;
+    }
+
+    try {
+      const { data: userData, error: userError } = await db.auth.getUser();
+      if (userError) throw userError;
+      const userId = userData?.user?.id;
+      if (!userId) throw new Error('Utilisateur administrateur non identifié.');
+
+      const now = new Date().toISOString();
+      const payload = shipments.map(s => ({
+        id: s.id,
+        user_id: s.user_id || userId,
+        ref: s.ref || '',
+        article_reference: s.ref || '',
+        reference: s.container || '',
+        origin: s.originPort || '',
+        product: s.goods || '',
+        supplier: s.supplier || '',
+        country: s.country || '',
+        mode: s.mode || '',
+        incoterm: s.incoterm || '',
+        goods: s.goods || '',
+        article_names: s.articleNames || '',
+        quantity: s.quantity === '' ? null : s.quantity,
+        unit: s.unit || '',
+        container: s.container || '',
+        bl: s.bl || '',
+        invoice: s.invoice || '',
+        origin_port: s.originPort || '',
+        dest_port: s.destPort || '',
+        transporter: s.transporter || '',
+        order_date: s.orderDate || null,
+        load_date: s.loadDate || null,
+        etd: s.etd || null,
+        eta: s.eta || null,
+        actual_arrival: s.actualArrival || null,
+        status: s.status || 'Commandée',
+        surestaries_start_date: s.surestariesStartDate || null,
+        terminal_out_date: s.terminalOutDate || null,
+        free_days: s.freeDays === '' ? null : s.freeDays,
+        daily_rate: s.dailyRate === '' ? null : s.dailyRate,
+        container_count: s.containerCount || 1,
+        currency: s.currency || 'MAD',
+        notes: s.notes || '',
+        updated_at: now
+      }));
+
+      if (payload.length) {
+        const { error } = await db
+          .from('shipments')
+          .upsert(payload, { onConflict: 'id' });
+        if (error) throw error;
+      }
+
+      if ($('lastUpdated')) {
+        $('lastUpdated').textContent =
+          'Dernière sauvegarde Supabase : ' +
+          new Date().toLocaleString('fr-FR', {
+            dateStyle: 'short', timeStyle: 'short'
+          });
+      }
+      return true;
+    } catch (error) {
+      console.error(error);
+      notify('Erreur Supabase : ' + error.message);
+      return false;
+    }
+  }
+
+  function renderPublic() {
+    const rows = shipments.slice();
+    const q = $('search') ? $('search').value.trim().toLocaleLowerCase('fr') : '';
+
+    const filtered = q
+      ? rows.filter(s =>
+          [s.ref, s.supplier, s.container, s.articleNames]
+            .some(v => String(v || '').toLocaleLowerCase('fr').includes(q))
+        )
+      : rows;
+
+    if ($('listCount')) $('listCount').textContent = `${filtered.length} chargement(s)`;
+    if ($('footerCount')) $('footerCount').textContent =
+      `Affichage de ${filtered.length} chargement(s)`;
+    if ($('emptyState')) $('emptyState').style.display = filtered.length ? 'none' : 'block';
+
+    const tableWrap = document.querySelector('.table-wrap');
+    if (tableWrap) tableWrap.style.display = filtered.length ? 'block' : 'none';
+
+    if ($('shipmentRows')) {
+      $('shipmentRows').innerHTML = filtered.map(s => `
+        <tr>
+          <td>
+            <div class="ref">${escapeHtml(s.ref || '—')}</div>
+            <div class="supplier">${escapeHtml(s.supplier || '—')}</div>
+            <div class="subtext" style="margin-top:7px;font-weight:700;color:#3157d5">
+              ARTICLES :
+            </div>
+            <div style="white-space:pre-line;font-size:12px;line-height:1.7;max-width:300px">
+              ${escapeHtml(s.articleNames || 'Articles non renseignés')}
+            </div>
+          </td>
+          <td></td>
+          <td><div style="font-weight:650;font-size:12px">${escapeHtml(s.container || '—')}</div></td>
+          <td>
+            <div class="quantity">
+              ${s.quantity !== '' ? Number(s.quantity).toLocaleString('fr-FR') : '—'}
+              <span class="qty-unit">${escapeHtml(s.unit)}</span>
+            </div>
+          </td>
+          <td></td>
+          <td></td>
+          <td><span class="status ${STATUS_CLASS[s.status] || 's-commandee'}">${escapeHtml(s.status)}</span></td>
+          <td></td>
+        </tr>
+      `).join('');
+    }
+  }
+
+  function render() {
+    const active = shipments.filter(isActive).length;
+    const transit = shipments.filter(isInTransit).length;
+    const customs = shipments.filter(s => s.status === 'Dédouanement').length;
+    const late = shipments.filter(daysLate).length;
+    const surestariesActive = shipments.filter(s => {
+      const c = calcSurestaries(s);
+      return c.ongoing && c.configured && c.chargeableDays > 0;
+    }).length;
+
+    if ($('metricActive')) $('metricActive').textContent = active;
+    if ($('metricTransit')) $('metricTransit').textContent = transit;
+    if ($('metricCustoms')) $('metricCustoms').textContent = customs;
+    if ($('metricLate')) $('metricLate').textContent = late;
+    if ($('lateMetric')) $('lateMetric').classList.toggle('alert', late > 0);
+    if ($('metricSurestaries')) $('metricSurestaries').textContent = surestariesActive;
+    if ($('surestariesMetric')) {
+      $('surestariesMetric').classList.toggle('alert', surestariesActive > 0);
+    }
+
+    renderAlerts();
+
+    let rows = shipments.slice();
+    const q = $('search').value.trim().toLocaleLowerCase('fr');
+    const status = $('statusFilter').value;
+    const mode = $('modeFilter').value;
+
+    if (q) {
+      rows = rows.filter(s =>
+        [s.ref, s.supplier, s.container, s.bl, s.goods, s.articleNames,
+         s.country, s.invoice, s.originPort, s.destPort, s.transporter]
+          .some(v => String(v || '').toLocaleLowerCase('fr').includes(q))
+      );
+    }
+    if (status) rows = rows.filter(s => s.status === status);
+    if (mode) rows = rows.filter(s => s.mode === mode);
+
+    const sort = $('sortFilter').value;
+    if (sort === 'eta') {
+      rows.sort((a, b) => (a.eta || '9999').localeCompare(b.eta || '9999'));
+    } else if (sort === 'newest') {
+      rows.sort((a, b) =>
+        (b.updatedAt || b.createdAt || '').localeCompare(a.updatedAt || a.createdAt || '')
+      );
+    } else {
+      rows.sort((a, b) => (a.supplier || '').localeCompare(b.supplier || '', 'fr'));
+    }
+
+    if ($('listCount')) {
+      $('listCount').textContent =
+        `${rows.length} chargement${rows.length !== 1 ? 's' : ''} affiché${rows.length !== 1 ? 's' : ''}`;
+    }
+    if ($('footerCount')) {
+      $('footerCount').textContent =
+        `Affichage de ${rows.length} sur ${shipments.length} chargement${shipments.length !== 1 ? 's' : ''}`;
+    }
+    if ($('emptyState')) $('emptyState').style.display = rows.length ? 'none' : 'block';
+
+    const tableWrap = document.querySelector('.table-wrap');
+    if (tableWrap) tableWrap.style.display = rows.length ? 'block' : 'none';
+
+    if ($('shipmentRows')) {
+      $('shipmentRows').innerHTML = rows.map(s => {
+        const route = [s.originPort, s.destPort].filter(Boolean);
+        const routeText = route.length
+          ? route.map(escapeHtml).join(' → ')
+          : 'Trajet à préciser';
+        const quant = s.quantity !== '' && s.quantity != null
+          ? `${Number(s.quantity).toLocaleString('fr-FR', { maximumFractionDigits: 2 })}
+             <span class="qty-unit">${escapeHtml(s.unit || 'm²')}</span>`
+          : '—';
+        const lateLabel = daysLate(s)
+          ? `<span class="late">En retard (${dayDifference(s.eta, todayISO())} j)</span>`
+          : '';
+        const surestariesText = surestariesLabel(s);
+        const articlePreview = String(s.articleNames || '')
+          .split(/\r?\n/).map(x => x.trim()).filter(Boolean).slice(0, 2).join(' · ');
+
+        return `
+          <tr>
+            <td>
+              <div class="ref">${escapeHtml(s.ref || 'Sans référence')}</div>
+              <div class="supplier">${escapeHtml(s.supplier || 'Fournisseur non précisé')}</div>
+              <div class="subtext">${escapeHtml(s.goods || s.country || '')}</div>
+              ${articlePreview ? `
+                <div class="subtext" title="${escapeHtml(s.articleNames)}"
+                     style="max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                  Articles : ${escapeHtml(articlePreview)}
+                </div>` : ''}
+            </td>
+            <td>
+              <div class="route">${routeText}</div>
+              <div class="subtext">${escapeHtml(s.mode || '')}
+                ${s.incoterm ? '· ' + escapeHtml(s.incoterm) : ''}
+              </div>
+            </td>
+            <td><div style="font-weight:650;font-size:12px">${escapeHtml(s.container || '—')}</div></td>
+            <td><div class="quantity">${quant}</div></td>
+            <td><div class="date">${fmtDate(s.eta)}</div>${lateLabel}</td>
+            <td>${surestariesText}</td>
+            <td><span class="status ${STATUS_CLASS[s.status] || 's-commandee'}">${escapeHtml(s.status || 'Commandée')}</span></td>
+            <td>
+              <div class="row-actions">
+                <button class="icon-btn" data-action="edit" data-id="${escapeHtml(s.id)}"
+                        title="Modifier" aria-label="Modifier">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                       stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m14 5 5 5M4 20l4-.8L19 8a2.1 2.1 0 0 0-3-3L5 16l-1 4Z"/>
+                  </svg>
+                </button>
+                <button class="icon-btn" data-action="delete" data-id="${escapeHtml(s.id)}"
+                        title="Supprimer" aria-label="Supprimer">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                       stroke-width="1.8" stroke-linecap="round">
+                    <path d="M4 7h16M10 11v6M14 11v6M5 7l1 14h12l1-14M9 7V4h6v3"/>
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>`;
+      }).join('');
+    }
+  }
+
+  function renderAlerts() {
+    const alerts = [];
+    const today = todayISO();
+
+    shipments.forEach(s => {
+      const label = `${s.ref || 'Sans référence'} — ${s.supplier || 'Fournisseur non précisé'}`;
+
+      if (daysLate(s)) {
+        const delay = dayDifference(s.eta, today);
+        alerts.push({
+          level: 'danger',
+          title: 'Retard d’arrivée',
+          text: `${label} : arrivée prévue le ${fmtDate(s.eta)}, dépassée de ${delay} jour(s).`
+        });
+      }
+
+      const c = calcSurestaries(s);
+      if (c.hasStart && !c.hasFree) {
+        alerts.push({
+          level: 'warning',
+          title: 'Franchise à renseigner',
+          text: `${label} : indiquez le nombre de jours gratuits prévu par le transporteur pour activer le calcul.`
+        });
+        return;
+      }
+
+      if (!c.configured) return;
+
+      if (c.ongoing && c.chargeableDays > 0) {
+        const amountText = c.hasRate
+          ? `Coût estimé à ce jour : ${fmtMoney(c.amount, c.currency)}.`
+          : 'Renseignez le tarif journalier pour calculer le montant.';
+        alerts.push({
+          level: 'danger',
+          title: 'Surestaries en cours',
+          text: `${label} : ${c.chargeableDays} jour(s) facturable(s) pour ${c.count} conteneur(s). ${amountText}`
+        });
+      } else if (
+        c.ongoing && c.chargeableDays === 0 &&
+        c.freeDays > 0 && c.totalDays >= Math.max(1, c.freeDays - 1)
+      ) {
+        const left = Math.max(0, c.freeDays - c.totalDays);
+        alerts.push({
+          level: 'warning',
+          title: left === 0 ? 'Franchise échue aujourd’hui' : 'Franchise bientôt échue',
+          text: `${label} : ${left === 0
+            ? 'le dernier jour gratuit est atteint.'
+            : 'il reste environ ' + left + ' jour(s) de franchise.'} Vérifiez la date de sortie du terminal.`
+        });
+      }
+    });
+
+    const panel = $('alertPanel');
+    const list = $('alertList');
+    if (!panel || !list) return;
+
+    if (!alerts.length) {
+      panel.hidden = true;
+      list.innerHTML = '';
+      return;
+    }
+
+    panel.hidden = false;
+    if ($('alertSummary')) {
+      $('alertSummary').textContent = `${alerts.length} alerte(s) nécessitent votre attention.`;
+    }
+    list.innerHTML = alerts.map(a => `
+      <article class="alert-item ${a.level}">
+        <strong>${escapeHtml(a.title)}</strong>
+        <p>${escapeHtml(a.text)}</p>
+      </article>
+    `).join('');
+  }
+
+  function updateSurestariesPreview() {
+    const c = calcSurestaries({
+      surestariesStartDate: $('fSurestariesStartDate').value,
+      terminalOutDate: $('fTerminalOutDate').value,
+      freeDays: $('fFreeDays').value,
+      dailyRate: $('fDailyRate').value,
+      containerCount: $('fContainerCount').value,
+      currency: $('fCurrency').value
+    });
+
+    $('previewChargeDays').textContent =
+      c.hasStart && c.hasFree ? `${c.chargeableDays} jour(s)` : 'À renseigner';
+    $('previewChargeAmount').textContent =
+      c.amount == null ? 'À calculer' : fmtMoney(c.amount, c.currency);
+    $('previewUntil').textContent = c.hasStart ? fmtDate(c.end) : '—';
+  }
+
+  function uid() {
+    return crypto.randomUUID();
+  }
+
+  function makeRef() {
+    const year = new Date().getFullYear();
+    let number = shipments.length + 1;
+    let reference;
+    do {
+      reference = `IMP-${year}-${String(number).padStart(3, '0')}`;
+      number++;
+    } while (shipments.some(s => s.ref === reference));
+    return reference;
+  }
+
+  function openModal(id) {
+    if (!isAdmin) {
+      notify('Connexion administrateur requise.');
+      return;
+    }
+
+    editingId = id || null;
+    const form = $('shipmentForm');
+    form.reset();
+
+    const s = id ? shipments.find(x => x.id === id) : null;
+    $('modalTitle').textContent = s ? 'Modifier le chargement' : 'Nouveau chargement';
+    $('deleteShipment').style.display = s ? 'inline-flex' : 'none';
+
+    const values = {
+      fRef: s?.ref || makeRef(),
+      fSupplier: s?.supplier || '',
+      fCountry: s?.country || '',
+      fMode: s?.mode || 'Maritime',
+      fIncoterm: s?.incoterm || '',
+      fGoods: s?.goods || '',
+      fArticleNames: s?.articleNames || '',
+      fQuantity: s?.quantity ?? '',
+      fUnit: s?.unit || 'm²',
+      fContainer: s?.container || '',
+      fBl: s?.bl || '',
+      fInvoice: s?.invoice || '',
+      fOriginPort: s?.originPort || '',
+      fDestPort: s?.destPort || '',
+      fTransporter: s?.transporter || '',
+      fOrderDate: s?.orderDate || todayISO(),
+      fLoadDate: s?.loadDate || '',
+      fEtd: s?.etd || '',
+      fEta: s?.eta || '',
+      fActualArrival: s?.actualArrival || '',
+      fStatus: s?.status || 'Commandée',
+      fSurestariesStartDate: s?.surestariesStartDate || '',
+      fTerminalOutDate: s?.terminalOutDate || '',
+      fFreeDays: s?.freeDays ?? '',
+      fDailyRate: s?.dailyRate ?? '',
+      fContainerCount: s?.containerCount ?? 1,
+      fCurrency: s?.currency || 'MAD',
+      fNotes: s?.notes || ''
+    };
+
+    Object.entries(values).forEach(([id, value]) => {
+      if ($(id)) $(id).value = value;
+    });
+
+    $('modalOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    updateSurestariesPreview();
+    setTimeout(() => $('fSupplier').focus(), 40);
+  }
+
+  function closeModal() {
+    $('modalOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+    editingId = null;
+  }
+
+  function fieldData() {
+    const names = {
+      ref: 'fRef',
+      supplier: 'fSupplier',
+      country: 'fCountry',
+      mode: 'fMode',
+      incoterm: 'fIncoterm',
+      goods: 'fGoods',
+      articleNames: 'fArticleNames',
+      quantity: 'fQuantity',
+      unit: 'fUnit',
+      container: 'fContainer',
+      bl: 'fBl',
+      invoice: 'fInvoice',
+      originPort: 'fOriginPort',
+      destPort: 'fDestPort',
+      transporter: 'fTransporter',
+      orderDate: 'fOrderDate',
+      loadDate: 'fLoadDate',
+      etd: 'fEtd',
+      eta: 'fEta',
+      actualArrival: 'fActualArrival',
+      status: 'fStatus',
+      surestariesStartDate: 'fSurestariesStartDate',
+      terminalOutDate: 'fTerminalOutDate',
+      freeDays: 'fFreeDays',
+      dailyRate: 'fDailyRate',
+      containerCount: 'fContainerCount',
+      currency: 'fCurrency',
+      notes: 'fNotes'
+    };
+
+    const out = {};
+    for (const [key, id] of Object.entries(names)) {
+      out[key] = $(id).value.trim();
+    }
+
+    out.quantity = out.quantity === '' ? '' : Number(out.quantity);
+    out.freeDays = out.freeDays === '' ? '' : Number(out.freeDays);
+    out.dailyRate = out.dailyRate === '' ? '' : Number(out.dailyRate);
+    out.containerCount = out.containerCount === '' ? 1 : Number(out.containerCount);
+    return out;
+  }
+
+  async function deleteShipment(id) {
+    if (!isAdmin) {
+      notify('Connexion administrateur requise.');
+      return;
+    }
+
+    const s = shipments.find(x => x.id === id);
+    if (!s) return;
+
+    if (!confirm(`Supprimer le chargement ${s.ref || ''} ? Cette action est définitive.`)) {
+      return;
+    }
+
+    const { error } = await db.from('shipments').delete().eq('id', id);
+    if (error) {
+      notify('Erreur Supabase : ' + error.message);
+      return;
+    }
+
+    shipments = shipments.filter(x => x.id !== id);
+    render();
+    closeModal();
+    notify('Chargement supprimé.');
+  }
+
+  function download(name, content, type) {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function csvEscape(value) {
+    return '"' + String(value ?? '').replace(/"/g, '""') + '"';
+  }
+
+  $('shipmentForm').addEventListener('submit', async event => {
+    event.preventDefault();
+
+    const wasEditing = Boolean(editingId);
+    const form = fieldData();
+    const duplicate = shipments.some(s =>
+      String(s.ref || '').toLocaleLowerCase() === form.ref.toLocaleLowerCase() &&
+      s.id !== editingId
+    );
+
+    if (duplicate) {
+      notify('Cette référence existe déjà. Choisissez une autre référence.');
+      $('fRef').focus();
+      return;
+    }
+
+    const now = new Date().toISOString();
+    if (editingId) {
+      const index = shipments.findIndex(s => s.id === editingId);
+      if (index >= 0) {
+        shipments[index] = { ...shipments[index], ...form, updatedAt: now };
+      }
+    } else {
+      shipments.unshift({
+        ...form,
+        id: uid(),
+        createdAt: now,
+        updatedAt: now
+      });
+    }
+
+    const saved = await persist();
+    if (saved) {
+      render();
+      closeModal();
+      notify(wasEditing ? 'Chargement mis à jour.' : 'Chargement ajouté.');
+    }
   });
-  if(btn) btn.addEventListener('click', async function(){
-    if(!deferredPrompt) return;
-    deferredPrompt.prompt();
-    await deferredPrompt.userChoice;
-    deferredPrompt=null; btn.style.display='none';
+
+  $('shipmentRows').addEventListener('click', event => {
+    const button = event.target.closest('button[data-action]');
+    if (!button) return;
+    if (button.dataset.action === 'edit') openModal(button.dataset.id);
+    if (button.dataset.action === 'delete') deleteShipment(button.dataset.id);
   });
-  window.addEventListener('appinstalled', function(){ if(btn) btn.style.display='none'; });
+
+  $('newShipment').addEventListener('click', () => openModal());
+  $('emptyAdd').addEventListener('click', () => openModal());
+  $('closeModal').addEventListener('click', closeModal);
+  $('cancelModal').addEventListener('click', closeModal);
+  $('modalOverlay').addEventListener('click', event => {
+    if (event.target === $('modalOverlay')) closeModal();
+  });
+
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && $('modalOverlay').classList.contains('open')) {
+      closeModal();
+    }
+  });
+
+  $('deleteShipment').addEventListener('click', () => {
+    if (editingId) deleteShipment(editingId);
+  });
+
+  ['search', 'statusFilter', 'modeFilter', 'sortFilter'].forEach(id => {
+    $(id).addEventListener(id === 'search' ? 'input' : 'change', () => {
+      isAdmin ? render() : renderPublic();
+    });
+  });
+
+  $('resetFilters').addEventListener('click', () => {
+    $('search').value = '';
+    $('statusFilter').value = '';
+    $('modeFilter').value = '';
+    $('sortFilter').value = 'eta';
+    isAdmin ? render() : renderPublic();
+  });
+
+  $('exportCsv').addEventListener('click', () => {
+    const headers = [
+      'Référence', 'Fournisseur', 'Pays origine', 'Transport', 'Incoterm',
+      'Marchandise / catégorie', 'Noms des articles', 'Quantité totale', 'Unité',
+      'Conteneur', 'BL', 'Facture', 'Départ', 'Destination', 'Transitaire',
+      'Date commande', 'Date chargement', 'ETD', 'ETA', 'Arrivée réelle',
+      'Statut', 'Début compteur surestaries', 'Sortie terminal',
+      'Franchise (jours)', 'Tarif/jour/conteneur', 'Nombre conteneurs',
+      'Devise', 'Notes'
+    ];
+    const keys = [
+      'ref', 'supplier', 'country', 'mode', 'incoterm', 'goods', 'articleNames',
+      'quantity', 'unit', 'container', 'bl', 'invoice', 'originPort', 'destPort',
+      'transporter', 'orderDate', 'loadDate', 'etd', 'eta', 'actualArrival',
+      'status', 'surestariesStartDate', 'terminalOutDate', 'freeDays',
+      'dailyRate', 'containerCount', 'currency', 'notes'
+    ];
+    const csv = '\ufeff' + [headers, ...shipments.map(s => keys.map(k => s[k] ?? ''))]
+      .map(row => row.map(csvEscape).join(';')).join('\r\n');
+
+    download(`suivi-import-${todayISO()}.csv`, csv, 'text/csv;charset=utf-8;');
+    notify('Export CSV prêt à être ouvert dans Excel.');
+  });
+
+  $('backupBtn').addEventListener('click', () => {
+    download(
+      `sauvegarde-suivi-import-${todayISO()}.json`,
+      JSON.stringify({
+        app: 'Suivi Import',
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        shipments
+      }, null, 2),
+      'application/json'
+    );
+    notify('Sauvegarde téléchargée.');
+  });
+
+  $('restoreBtn').addEventListener('click', () => $('restoreFile').click());
+
+  $('restoreFile').addEventListener('change', async event => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const object = JSON.parse(await file.text());
+      const array = Array.isArray(object) ? object : object.shipments;
+      if (!Array.isArray(array)) throw new Error('Format non reconnu');
+
+      if (!confirm(`Importer ${array.length} chargement(s) ? Les références déjà présentes seront remplacées par celles de la sauvegarde.`)) {
+        return;
+      }
+
+      const map = new Map(shipments.map(s => [s.ref, s]));
+      array.forEach(s => {
+        if (!s || !s.ref || !s.supplier) return;
+        const existing = map.get(s.ref);
+        map.set(s.ref, {
+          ...existing,
+          ...s,
+          id: existing?.id || s.id || uid(),
+          updatedAt: new Date().toISOString()
+        });
+      });
+
+      shipments = Array.from(map.values());
+      const saved = await persist();
+      if (saved) {
+        render();
+        notify('Sauvegarde importée avec succès.');
+      }
+    } catch (error) {
+      console.error(error);
+      notify('Fichier invalide ou erreur pendant l’importation.');
+    } finally {
+      event.target.value = '';
+    }
+  });
+
+  [
+    'fSurestariesStartDate', 'fTerminalOutDate', 'fFreeDays',
+    'fDailyRate', 'fContainerCount', 'fCurrency'
+  ].forEach(id => $(id).addEventListener('input', updateSurestariesPreview));
+
+  window.addEventListener('focus', () => {
+    isAdmin ? render() : renderPublic();
+  });
+
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) isAdmin ? render() : renderPublic();
+  });
+
+  $('adminLoginBtn').addEventListener('click', () => {
+    $('loginOverlay').classList.add('open');
+  });
+  $('closeLogin').addEventListener('click', () => {
+    $('loginOverlay').classList.remove('open');
+  });
+  $('cancelLogin').addEventListener('click', () => {
+    $('loginOverlay').classList.remove('open');
+  });
+  $('loginOverlay').addEventListener('click', event => {
+    if (event.target === $('loginOverlay')) {
+      $('loginOverlay').classList.remove('open');
+    }
+  });
+
+  $('loginForm').addEventListener('submit', async event => {
+    event.preventDefault();
+    $('loginError').textContent = '';
+
+    const { error } = await db.auth.signInWithPassword({
+      email: $('loginEmail').value.trim(),
+      password: $('loginPassword').value
+    });
+
+    if (error) {
+      $('loginError').textContent = 'Connexion impossible : ' + error.message;
+      return;
+    }
+
+    $('loginOverlay').classList.remove('open');
+    setMode(true);
+    await loadFromSupabase();
+    notify('Connexion administrateur réussie.');
+  });
+
+  $('logoutBtn').addEventListener('click', async () => {
+    const { error } = await db.auth.signOut();
+    if (error) {
+      notify('Erreur lors de la déconnexion : ' + error.message);
+      return;
+    }
+    setMode(false);
+    shipments = [];
+    await loadPublicShipments();
+    notify('Déconnexion effectuée.');
+  });
+
+  db.auth.onAuthStateChange(async (_event, session) => {
+    const admin = !!session?.user;
+    setMode(admin);
+    if (admin) {
+      await loadFromSupabase();
+    } else {
+      await loadPublicShipments();
+    }
+  });
+
+  setStatusOptions();
+  setMode(false);
+  loadPublicShipments();
 })();
 </script>
+
 </body>
 </html>
