@@ -1,49 +1,232 @@
-function renderPublic(){
-  const rows=shipments.slice();
-  const q=$('search').value.trim().toLocaleLowerCase('fr');
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#172554">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>Suivi Import — Chargements</title>
+<style>
+:root{--ink:#1f2937;--muted:#6b7280;--line:#e5e7eb;--bg:#f5f7fb;--card:#fff;--navy:#172554;--blue:#3157d5;--blue2:#eaf0ff;--green:#087f5b;--amber:#9a6700;--red:#c62828;--shadow:0 8px 24px rgba(20,34,70,.06)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer}.app{max-width:1500px;margin:auto;padding:28px 30px 40px}.topbar{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:26px}.brand{display:flex;align-items:center;gap:13px}.logo{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;background:var(--navy);color:#fff;box-shadow:var(--shadow)}.logo svg{width:25px;height:25px}.eyebrow{text-transform:uppercase;font-size:11px;letter-spacing:.13em;font-weight:800;color:var(--blue);margin-bottom:3px}.brand h1{font-size:24px;letter-spacing:-.04em;margin:0;font-weight:760}.subheading{color:var(--muted);margin:4px 0 0}.actions{display:flex;gap:9px;flex-wrap:wrap}.btn{border:1px solid var(--line);background:#fff;color:#293548;border-radius:10px;padding:10px 13px;font-weight:650;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:.15s}.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px #1d2d5014}.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}.btn.danger{color:var(--red)}.btn.small{padding:7px 10px;font-size:12px}.btn svg{height:16px;width:16px}.hero{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin:0 0 18px}.hero h2{font-size:19px;margin:0 0 4px;letter-spacing:-.025em}.hero p{margin:0;color:var(--muted)}.updated{color:var(--muted);font-size:12px;white-space:nowrap}.metrics{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;margin-bottom:22px}.metric{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:18px 19px;box-shadow:var(--shadow);min-width:0}.metric-top{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:12px;font-weight:650}.metric-icon{display:grid;place-items:center;width:32px;height:32px;border-radius:10px;background:#f0f3fb;color:var(--navy)}.metric-icon svg{width:17px;height:17px}.metric-value{font-size:30px;line-height:1.2;font-weight:780;letter-spacing:-.055em;margin-top:12px}.metric-foot{font-size:12px;color:var(--muted);margin-top:5px}.metric.alert .metric-icon{background:#fff0f0;color:var(--red)}.metric.alert .metric-value{color:var(--red)}.main-card{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}.list-head{padding:19px 20px 14px;display:flex;justify-content:space-between;gap:14px;align-items:center}.list-head h3{margin:0;font-size:16px;letter-spacing:-.02em}.count{font-size:12px;color:var(--muted);margin-top:4px}.tools{display:flex;gap:9px;align-items:center}.searchbox{position:relative}.searchbox svg{position:absolute;left:11px;top:11px;width:16px;height:16px;color:#8a94a7}.searchbox input{padding-left:35px;width:245px}.field-control{border:1px solid #d9deea;background:#fff;border-radius:9px;padding:9px 11px;color:#293548;outline:none;min-width:0}.field-control:focus{border-color:#8095f2;box-shadow:0 0 0 3px #3157d51a}.filters{padding:0 20px 14px;display:flex;gap:9px;flex-wrap:wrap}.table-wrap{overflow:auto;border-top:1px solid #edf0f5}table{border-collapse:collapse;width:100%;min-width:1000px}thead th{text-align:left;background:#fafbfe;color:#697386;font-size:10px;text-transform:uppercase;letter-spacing:.09em;font-weight:750;padding:12px 15px;white-space:nowrap}tbody td{border-top:1px solid #edf0f5;padding:15px;vertical-align:middle}tbody tr:hover{background:#fafbff}.ref{font-size:12px;font-weight:800;color:var(--blue);letter-spacing:.02em}.supplier{font-weight:720;color:#263246;max-width:190px}.subtext{font-size:11px;color:var(--muted);margin-top:4px}.route{display:flex;align-items:center;gap:7px;color:#3d4759;font-weight:600;white-space:nowrap}.route svg{height:13px;width:13px;color:#9aa4b4}.date{white-space:nowrap;font-weight:620;font-size:12px}.quantity{font-weight:750;white-space:nowrap}.qty-unit{font-size:11px;color:var(--muted);font-weight:500}.status{display:inline-flex;align-items:center;gap:6px;padding:5px 8px;border-radius:7px;font-size:11px;font-weight:750;white-space:nowrap}.status:before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}.s-commandee{background:#f0f1f5;color:#505a6b}.s-preparation{background:#eef2ff;color:#4338ca}.s-charge{background:#e8f0ff;color:#1d4ed8}.s-transit{background:#e5f6ff;color:#0369a1}.s-port{background:#f1eaff;color:#7e22ce}.s-douane{background:#fff4d6;color:#976600}.s-livraison{background:#e1f7ed;color:#087f5b}.s-livree{background:#e7f7ed;color:#16804a}.s-bloque{background:#ffebeb;color:#c62828}.late{font-size:10px;font-weight:800;color:var(--red);display:block;margin-top:5px}.row-actions{display:flex;gap:5px}.icon-btn{width:30px;height:30px;border-radius:8px;border:1px solid transparent;background:transparent;color:#647084;display:grid;place-items:center}.icon-btn:hover{background:#eef2ff;color:var(--blue)}.icon-btn svg{width:15px;height:15px}.empty{padding:52px 20px;text-align:center;color:var(--muted)}.empty-icon{width:48px;height:48px;background:#f0f3fb;color:#73809a;border-radius:14px;display:grid;place-items:center;margin:0 auto 13px}.empty-icon svg{width:24px;height:24px}.empty strong{display:block;color:#303b4d;margin-bottom:5px;font-size:15px}.table-footer{border-top:1px solid var(--line);padding:12px 20px;display:flex;justify-content:space-between;gap:15px;color:var(--muted);font-size:12px}.footer-note{margin:15px 2px 0;color:#7b8495;font-size:11px;display:flex;align-items:center;gap:7px}.footer-note svg{width:14px;height:14px;flex-shrink:0}
+.alert-panel{background:#fff;border:1px solid #f0c6c6;border-radius:15px;box-shadow:var(--shadow);margin:0 0 20px;overflow:hidden}.alert-panel[hidden]{display:none}.alert-heading{display:flex;align-items:center;gap:10px;padding:15px 18px;border-bottom:1px solid #f7e0e0;background:#fffafa}.alert-heading-icon{width:32px;height:32px;display:grid;place-items:center;border-radius:10px;background:#ffebeb;color:var(--red);flex-shrink:0}.alert-heading h3{margin:0;font-size:15px}.alert-heading p{margin:3px 0 0;color:var(--muted);font-size:12px}.alert-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:13px}.alert-item{border:1px solid var(--line);border-radius:11px;padding:12px 13px;min-width:0}.alert-item.danger{border-color:#f3c7c7;background:#fffafa}.alert-item.warning{border-color:#f0d9a3;background:#fffdf6}.alert-item.info{border-color:#cdd9ff;background:#f9faff}.alert-item strong{display:block;font-size:12px;margin-bottom:4px}.alert-item p{font-size:12px;color:#586274;margin:0;overflow-wrap:anywhere}.alert-item.danger strong{color:#b42318}.alert-item.warning strong{color:#8a5b00}.alert-item.info strong{color:#3157d5}.money-main{font-weight:800;color:#263246;white-space:nowrap}.surestaries-chip{display:inline-block;border-radius:6px;background:#fff4d6;color:#8a5b00;font-weight:750;font-size:11px;padding:4px 6px;white-space:nowrap}.surestaries-chip.clear{background:#e8f7ef;color:#087f5b}.calc-preview{grid-column:1/-1;background:#f8faff;border:1px solid #dbe4ff;border-radius:11px;padding:13px 14px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.calc-preview .calc-label{font-size:11px;color:var(--muted)}.calc-preview .calc-value{font-size:16px;font-weight:800;margin-top:3px;overflow-wrap:anywhere}.calc-preview .calc-note{grid-column:1/-1;font-size:10px;color:var(--muted)}@media(max-width:640px){.alert-list{grid-template-columns:1fr;padding:10px}.calc-preview{grid-template-columns:1fr}.calc-preview .calc-note{grid-column:auto}}
+/* modal */
+.overlay{position:fixed;inset:0;background:#10172a88;backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;padding:20px;z-index:10}.overlay.open{display:flex}.modal{width:min(800px,100%);max-height:94vh;overflow:auto;background:#fff;border-radius:17px;box-shadow:0 24px 80px #0f172a55}.modal-head{padding:20px 24px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff;z-index:2}.modal-head h3{margin:0;font-size:18px;letter-spacing:-.025em}.modal-head p{margin:4px 0 0;color:var(--muted);font-size:12px}.close{border:0;background:#f1f3f7;color:#616b7d;width:34px;height:34px;border-radius:9px;font-size:21px}.formbody{padding:21px 24px 8px}.section-title{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#647084;font-weight:800;margin:4px 0 13px}.formgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px 13px;margin-bottom:24px}.form-field{display:flex;flex-direction:column;gap:6px;min-width:0}.form-field.span2{grid-column:span 2}.form-field.full{grid-column:1/-1}.form-field label{font-size:12px;font-weight:700;color:#394456}.form-field label .req{color:var(--red)}.form-field input,.form-field select,.form-field textarea{width:100%;border:1px solid #d9deea;border-radius:9px;padding:10px 11px;background:#fff;color:#202b3c;outline:none}.form-field textarea{resize:vertical;min-height:72px}.form-field input:focus,.form-field select:focus,.form-field textarea:focus{border-color:#8095f2;box-shadow:0 0 0 3px #3157d51a}.hint{font-size:10px;color:var(--muted)}.modal-foot{padding:15px 24px 20px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;position:sticky;bottom:0;background:#fff}.foot-right{display:flex;gap:8px;margin-left:auto}.toast{position:fixed;right:22px;bottom:22px;background:#172554;color:#fff;padding:12px 16px;border-radius:11px;box-shadow:var(--shadow);z-index:20;opacity:0;transform:translateY(8px);pointer-events:none;transition:.2s}.toast.show{opacity:1;transform:translateY(0)}.mobile-label{display:none}
+@media(max-width:1000px){.app{padding:22px 18px}.metrics{grid-template-columns:repeat(3,minmax(0,1fr))}.list-head{align-items:flex-start;flex-direction:column}.tools{width:100%;flex-wrap:wrap}.searchbox{flex:1}.searchbox input{width:100%}.topbar{align-items:flex-start;flex-direction:column}.actions{width:100%}.btn{flex:0 0 auto}}
+@media(max-width:640px){.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.app{padding:16px 12px}.brand h1{font-size:21px}.hero{align-items:flex-start;flex-direction:column}.metrics{gap:9px}.metric{padding:13px}.metric-value{font-size:25px}.metric-top{font-size:11px}.metric-foot{font-size:10px}.list-head{padding:16px 14px 12px}.filters{padding:0 14px 13px}.tools .field-control{flex:1}.formgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.form-field.full{grid-column:1/-1}.form-field.span2{grid-column:span 2}.formbody{padding:17px 16px 4px}.modal-head{padding:17px 16px}.modal-foot{padding:13px 16px 16px}.table-footer{padding:12px 14px}.actions .btn{flex:1}.updated{white-space:normal}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5 12 3l9 4.5-9 4.5-9-4.5Z"/><path d="M3 12l9 4.5 9-4.5M3 16.5 12 21l9-4.5M12 12v9"/></svg></div>
+      <div><div class="eyebrow">Gestion logistique</div><h1>Suivi Import</h1><p class="subheading">Tous vos chargements, au même endroit.</p></div>
+    </div>
+    <div class="actions">
+      <button class="btn" id="adminLoginBtn" type="button">Connexion administrateur</button>
+      <button class="btn" id="logoutBtn" type="button" style="display:none">Déconnexion</button>
+      <button class="btn" id="installApp" style="display:none" title="Installer l’application">📲 Installer l’app</button>
+      
+      <button class="btn" id="exportCsv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m-4-4 4 4 4-4"/><path d="M5 16v4h14v-4"/></svg>Exporter Excel / CSV</button>
+      <button class="btn" id="restoreBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3m-4 4 4-4 4 4"/><path d="M4 14v6h16v-6"/></svg>Restaurer</button>
+      <button class="btn" id="backupBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m-4-4 4 4 4-4"/><path d="M4 17v3h16v-3"/></svg>Sauvegarde</button>
+      <button class="btn primary" id="newShipment"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Nouveau chargement</button>
+      <input id="restoreFile" type="file" accept="application/json,.json" hidden />
+    </div>
+  </header>
 
-  const filtered=q?rows.filter(s=>
-    [s.ref,s.supplier,s.container,s.articleNames]
-    .some(v=>String(v||'').toLocaleLowerCase('fr').includes(q))
-  ):rows;
+  <div class="hero"><div><h2>Vue d'ensemble</h2><p>Suivez l'avancement de vos importations de la commande à la livraison.</p></div><div class="updated" id="lastUpdated">Données enregistrées dans ce navigateur</div></div>
+  <section class="metrics" aria-label="Indicateurs de suivi">
+    <div class="metric"><div class="metric-top">Chargements actifs <span class="metric-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7.5 12 3l9 4.5-9 4.5-9-4.5Z"/><path d="M3 12l9 4.5 9-4.5M12 12v9"/></svg></span></div><div class="metric-value" id="metricActive">0</div><div class="metric-foot">Non encore livrés</div></div>
+    <div class="metric"><div class="metric-top">En transit <span class="metric-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h11v11H3zM14 10h4l3 3v4h-7z"/><circle cx="7.5" cy="18" r="1.8"/><circle cx="17.5" cy="18" r="1.8"/></svg></span></div><div class="metric-value" id="metricTransit">0</div><div class="metric-foot">Chargés ou en route</div></div>
+    <div class="metric"><div class="metric-top">À dédouaner <span class="metric-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 21V7l8-4 8 4v14M2 21h20M9 21v-6h6v6M8 10h.01M12 10h.01M16 10h.01"/></svg></span></div><div class="metric-value" id="metricCustoms">0</div><div class="metric-foot">En attente de douane</div></div>
+    <div class="metric alert" id="lateMetric"><div class="metric-top">En retard <span class="metric-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span></div><div class="metric-value" id="metricLate">0</div><div class="metric-foot">Date d'arrivée dépassée</div></div>
+    <div class="metric" id="surestariesMetric"><div class="metric-top">Surestaries en cours <span class="metric-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M8 5v5M16 5v5M8 15h8"/></svg></span></div><div class="metric-value" id="metricSurestaries">0</div><div class="metric-foot">Franchise dépassée au terminal</div></div>
+  </section>
 
-  $('listCount').textContent=`${filtered.length} chargement(s)`;
-  $('footerCount').textContent=`Affichage de ${filtered.length} chargement(s)`;
-  $('emptyState').style.display=filtered.length?'none':'block';
-  document.querySelector('.table-wrap').style.display=filtered.length?'block':'none';
+  <section class="alert-panel" id="alertPanel" hidden aria-live="polite">
+    <div class="alert-heading"><div class="alert-heading-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 4.3 2.8 17.2A1.8 1.8 0 0 0 4.4 20h15.2a1.8 1.8 0 0 0 1.6-2.8L13.7 4.3a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4m0 3h.01"/></svg></div><div><h3>Alertes à traiter</h3><p id="alertSummary">Retards et franchises de conteneurs à surveiller.</p></div></div>
+    <div class="alert-list" id="alertList"></div>
+  </section>
 
-  $('shipmentRows').innerHTML=filtered.map(s=>`
-    <tr>
-      <td>
-        <div class="ref">${escapeHtml(s.ref||'—')}</div>
-        <div class="supplier">${escapeHtml(s.supplier||'—')}</div>
-        <div class="subtext" style="margin-top:7px;font-weight:700;color:#3157d5">
-          ARTICLES :
-        </div>
-        <div style="white-space:pre-line;font-size:12px;line-height:1.7;max-width:300px">
-          ${escapeHtml(s.articleNames||'Articles non renseignés')}
-        </div>
-      </td>
-      <td></td>
-      <td>
-        <div style="font-weight:650;font-size:12px">
-          ${escapeHtml(s.container||'—')}
-        </div>
-      </td>
-      <td>
-        <div class="quantity">
-          ${s.quantity!==''?Number(s.quantity).toLocaleString('fr-FR'):'—'}
-          <span class="qty-unit">${escapeHtml(s.unit)}</span>
-        </div>
-      </td>
-      <td></td>
-      <td></td>
-      <td>
-        <span class="status ${STATUS_CLASS[s.status]||'s-commandee'}">
-          ${escapeHtml(s.status)}
-        </span>
-      </td>
-      <td></td>
-    </tr>
-  `).join('');
+  <section class="main-card">
+    <div class="list-head"><div><h3>Mes chargements</h3><div class="count" id="listCount">0 chargement</div></div><div class="tools"><div class="searchbox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4 4"/></svg><input class="field-control" id="search" placeholder="Référence, fournisseur, conteneur…" aria-label="Rechercher" /></div><select class="field-control" id="statusFilter" aria-label="Filtrer par statut"><option value="">Tous les statuts</option></select><select class="field-control" id="sortFilter" aria-label="Trier"><option value="eta">Trier : arrivée prévue</option><option value="newest">Plus récents</option><option value="supplier">Fournisseur A–Z</option></select></div></div>
+    <div class="filters"><select class="field-control" id="modeFilter" aria-label="Filtrer par transport"><option value="">Tous les transports</option><option>Maritime</option><option>Routier</option><option>Aérien</option><option>Autre</option></select><button class="btn small" id="resetFilters">Réinitialiser les filtres</button></div>
+    <div class="table-wrap"><table><thead><tr><th>Référence / fournisseur</th><th>Trajet</th><th>Conteneur</th><th>Quantité</th><th>Arrivée prévue</th><th>Surestaries estimées</th><th>Statut</th><th>Actions</th></tr></thead><tbody id="shipmentRows"></tbody></table></div>
+    <div class="empty" id="emptyState"><div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 7.5 12 3l9 4.5-9 4.5-9-4.5Z"/><path d="M3 12l9 4.5 9-4.5M3 16.5 12 21l9-4.5M12 12v9"/></svg></div><strong>Aucun chargement pour le moment</strong>Ajoutez votre première importation pour commencer le suivi.<br><button class="btn primary" style="margin-top:15px" id="emptyAdd">+ Ajouter un chargement</button></div>
+    <div class="table-footer"><span id="footerCount">Affichage de 0 chargement</span><span>Les retards et surestaries sont recalculés à chaque ouverture de l’application.</span></div>
+  </section>
+  <div class="footer-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Version locale : vos données restent dans ce navigateur. Utilisez « Sauvegarde » régulièrement pour conserver une copie de vos données.</div>
+</div>
+
+<div class="overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <form class="modal" id="shipmentForm">
+    <div class="modal-head"><div><h3 id="modalTitle">Nouveau chargement</h3><p>Renseignez les informations principales de l'importation.</p></div><button class="close" type="button" id="closeModal" aria-label="Fermer">×</button></div>
+    <div class="formbody">
+      <div class="section-title">Identification</div>
+      <div class="formgrid">
+        <div class="form-field"><label for="fRef">Référence interne <span class="req">*</span></label><input id="fRef" name="ref" placeholder="IMP-2026-001" required maxlength="40" /></div>
+        <div class="form-field span2"><label for="fSupplier">Fournisseur <span class="req">*</span></label><input id="fSupplier" name="supplier" placeholder="Nom du fournisseur" required maxlength="120" /></div>
+        <div class="form-field"><label for="fCountry">Pays d'origine</label><input id="fCountry" name="country" placeholder="Ex. Espagne" maxlength="70" /></div>
+        <div class="form-field"><label for="fMode">Mode de transport</label><select id="fMode" name="mode"><option>Maritime</option><option>Routier</option><option>Aérien</option><option>Autre</option></select></div>
+        <div class="form-field"><label for="fIncoterm">Incoterm</label><select id="fIncoterm" name="incoterm"><option value="">Non précisé</option><option>EXW</option><option>FCA</option><option>FOB</option><option>CFR</option><option>CIF</option><option>CPT</option><option>CIP</option><option>DAP</option><option>DPU</option><option>DDP</option></select></div>
+        <div class="form-field span2"><label for="fGoods">Marchandise / catégorie</label><input id="fGoods" name="goods" placeholder="Ex. Carrelage" maxlength="180" /></div>
+        <div class="form-field"><label for="fQuantity">Quantité totale</label><div style="display:flex;gap:6px"><input id="fQuantity" name="quantity" type="number" min="0" step="0.01" placeholder="0" style="flex:1;width:40%"/><select id="fUnit" name="unit" style="width:95px"><option>m²</option><option>palettes</option><option>cartons</option><option>unités</option><option>tonnes</option></select></div></div>
+        <div class="form-field full"><label for="fArticleNames">Noms des articles</label><textarea id="fArticleNames" name="articleNames" placeholder="Ex. : Carrelage 60×60 gris mat — 1 200 m²&#10;Carrelage 60×120 beige brillant — 800 m²&#10;Colle à carrelage — 50 sacs" maxlength="2500"></textarea><span class="hint">Vous pouvez saisir plusieurs articles, idéalement un article par ligne.</span></div>
+      </div>
+      <div class="section-title">Transport et documents</div>
+      <div class="formgrid">
+        <div class="form-field"><label for="fContainer">N° conteneur / camion</label><input id="fContainer" name="container" placeholder="Ex. MSKU1234567" maxlength="80" /></div>
+        <div class="form-field"><label for="fBl">N° BL / lettre de transport</label><input id="fBl" name="bl" placeholder="Numéro du document" maxlength="100" /></div>
+        <div class="form-field"><label for="fInvoice">N° facture</label><input id="fInvoice" name="invoice" placeholder="Référence facture" maxlength="100" /></div>
+        <div class="form-field"><label for="fOriginPort">Départ</label><input id="fOriginPort" name="originPort" placeholder="Ex. Valence" maxlength="100" /></div>
+        <div class="form-field"><label for="fDestPort">Port / destination</label><input id="fDestPort" name="destPort" placeholder="Ex. Tanger Med" maxlength="100" /></div>
+        <div class="form-field"><label for="fTransporter">Transitaire / transporteur</label><input id="fTransporter" name="transporter" placeholder="Nom / contact" maxlength="120" /></div>
+      </div>
+      <div class="section-title">Dates et avancement</div>
+      <div class="formgrid">
+        <div class="form-field"><label for="fOrderDate">Date de commande</label><input id="fOrderDate" name="orderDate" type="date" /></div>
+        <div class="form-field"><label for="fLoadDate">Date de chargement</label><input id="fLoadDate" name="loadDate" type="date" /></div>
+        <div class="form-field"><label for="fEtd">Départ prévu (ETD)</label><input id="fEtd" name="etd" type="date" /></div>
+        <div class="form-field"><label for="fEta">Arrivée prévue (ETA)</label><input id="fEta" name="eta" type="date" /></div>
+        <div class="form-field"><label for="fActualArrival">Arrivée réelle</label><input id="fActualArrival" name="actualArrival" type="date" /></div>
+        <div class="form-field"><label for="fStatus">Statut actuel <span class="req">*</span></label><select id="fStatus" name="status" required></select></div>
+      </div>
+      <div class="section-title">Surestaries au terminal (estimation)</div>
+      <div class="formgrid">
+        <div class="form-field"><label for="fSurestariesStartDate">Début du compteur</label><input id="fSurestariesStartDate" name="surestariesStartDate" type="date"/><span class="hint">Date de référence indiquée par la compagnie maritime.</span></div>
+        <div class="form-field"><label for="fTerminalOutDate">Sortie du terminal</label><input id="fTerminalOutDate" name="terminalOutDate" type="date"/><span class="hint">Laisser vide si le conteneur est toujours au terminal.</span></div>
+        <div class="form-field"><label for="fFreeDays">Franchise (jours gratuits)</label><input id="fFreeDays" name="freeDays" type="number" min="0" max="365" step="1" placeholder="Selon le tarif"/></div>
+        <div class="form-field"><label for="fDailyRate">Tarif par jour et conteneur</label><input id="fDailyRate" name="dailyRate" type="number" min="0" step="0.01" placeholder="Ex. 450"/></div>
+        <div class="form-field"><label for="fContainerCount">Nombre de conteneurs</label><input id="fContainerCount" name="containerCount" type="number" min="1" max="999" step="1" value="1"/></div>
+        <div class="form-field"><label for="fCurrency">Devise du tarif</label><select id="fCurrency" name="currency"><option value="MAD">MAD — Dirham</option><option value="EUR">EUR — Euro</option><option value="USD">USD — Dollar</option></select></div>
+        <div class="calc-preview" id="surestariesPreview" aria-live="polite"><div><div class="calc-label">Jours facturables estimés</div><div class="calc-value" id="previewChargeDays">—</div></div><div><div class="calc-label">Coût estimé</div><div class="calc-value" id="previewChargeAmount">—</div></div><div><div class="calc-label">Période calculée jusqu’au</div><div class="calc-value" id="previewUntil">—</div></div><div class="calc-note">Calcul simple à tarif journalier constant, jours calendaires inclusifs. La date de départ, la franchise, les paliers et les conditions applicables doivent être vérifiés sur le tarif du transporteur. Les frais de détention après sortie du terminal ne sont pas inclus.</div></div>
+      </div>
+      <div class="formgrid"><div class="form-field full"><label for="fNotes">Notes / prochaines actions</label><textarea id="fNotes" name="notes" placeholder="Ex. documents à recevoir, paiement douane, date de livraison…" maxlength="1500"></textarea></div></div>
+    </div>
+    <div class="modal-foot"><button type="button" class="btn danger" id="deleteShipment" style="display:none">Supprimer</button><div class="foot-right"><button type="button" class="btn" id="cancelModal">Annuler</button><button type="submit" class="btn primary">Enregistrer</button></div></div>
+  </form>
+</div>
+
+<div class="overlay" id="loginOverlay" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
+  <form class="modal" id="loginForm" style="width:min(420px,100%)">
+    <div class="modal-head"><div><h3 id="loginTitle">Connexion administrateur</h3><p>Connectez-vous pour gérer les chargements.</p></div><button class="close" type="button" id="closeLogin" aria-label="Fermer">×</button></div>
+    <div class="formbody"><div class="form-field"><label for="loginEmail">Adresse e-mail</label><input id="loginEmail" type="email" autocomplete="username" required></div><div class="form-field" style="margin-top:14px"><label for="loginPassword">Mot de passe</label><input id="loginPassword" type="password" autocomplete="current-password" required></div><p class="hint" id="loginError" style="color:#b42318"></p></div>
+    <div class="modal-foot"><div class="foot-right"><button class="btn" type="button" id="cancelLogin">Annuler</button><button class="btn primary" type="submit">Se connecter</button></div></div>
+  </form>
+</div>
+<style>body.public .metrics,body.public #alertPanel,body.public .filters,body.public #exportCsv,body.public #restoreBtn,body.public #backupBtn,body.public #newShipment,body.public #restoreFile,body.public #shipmentRows .row-actions,body.public .table-footer span:last-child{display:none!important}body.public #adminLoginBtn{display:inline-flex!important}body.public #logoutBtn{display:none!important}body.admin #adminLoginBtn{display:none!important}body.admin #logoutBtn{display:inline-flex!important}body.public #shipmentForm,body.public #emptyAdd{display:none!important}body.public .table-wrap table{min-width:650px}body.public .table-wrap th:nth-child(2),body.public .table-wrap th:nth-child(5),body.public .table-wrap th:nth-child(6),body.public .table-wrap th:nth-child(8){display:none}body.public .table-wrap td:nth-child(2),body.public .table-wrap td:nth-child(5),body.public .table-wrap td:nth-child(6),body.public .table-wrap td:nth-child(8){display:none}body.public #sortFilter,body.public #modeFilter,body.public #statusFilter{display:none!important}body.public .footer-note{display:none!important}</style>
+
+<input id="csvFile" type="file" accept="text/csv,.csv" hidden />
+<div class="toast" id="toast" role="status"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+window.SUPABASE_URL='https://mnyokiniupvtzesdmwit.supabase.co';
+window.SUPABASE_ANON_KEY='sb_publishable_-HIf7IptcZ1as_TXkn5SCQ_Fx6lPnbi';
+window.supabaseClient=window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
+</script>
+<script>
+(function(){
+'use strict';
+const STORAGE_KEY='suiviImportData_v1';
+  const db=window.supabaseClient;
+const STATUSES=['Commandée','En préparation','Chargé','En transit','Arrivé au port','Dédouanement','En livraison','Livré','Bloqué'];
+const STATUS_CLASS={'Commandée':'s-commandee','En préparation':'s-preparation','Chargé':'s-charge','En transit':'s-transit','Arrivé au port':'s-port','Dédouanement':'s-douane','En livraison':'s-livraison','Livré':'s-livree','Bloqué':'s-bloque'};
+let shipments=loadData(), editingId=null, toastTimer=null;
+const $=id=>document.getElementById(id);
+const todayISO=()=>{const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10)};
+function loadData(){return []}
+let isAdmin=false;
+function setMode(admin){isAdmin=!!admin;document.body.classList.toggle('admin',isAdmin);document.body.classList.toggle('public',!isAdmin);$('newShipment').style.display=isAdmin?'inline-flex':'none';$('exportCsv').style.display=isAdmin?'inline-flex':'none';$('restoreBtn').style.display=isAdmin?'inline-flex':'none';$('backupBtn').style.display=isAdmin?'inline-flex':'none';$('restoreFile').style.display='none';$('lastUpdated').textContent=isAdmin?'Espace administrateur':'Consultation publique';}
+async function loadFromSupabase(){if(!isAdmin)return loadPublicShipments();const {data,error}=await db.from('shipments').select('*').order('created_at',{ascending:false});if(error){console.error(error);notify('Erreur Supabase : '+error.message);return false}shipments=(data||[]).map(s=>({...s,container:s.container||s.reference||'',articleNames:s.article_names??'',originPort:s.origin_port??s.origin??'',destPort:s.dest_port??'',goods:s.goods??s.product??'',orderDate:s.order_date??'',loadDate:s.load_date??'',actualArrival:s.actual_arrival??'',surestariesStartDate:s.surestaries_start_date??'',terminalOutDate:s.terminal_out_date??'',freeDays:s.free_days??'',dailyRate:s.daily_rate??'',containerCount:s.container_count??1,updatedAt:s.updated_at??s.created_at}));$('lastUpdated').textContent='Données Supabase : '+new Date().toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'});render();return true}
+async function loadPublicShipments(){const {data,error}=await db.from('shipments_public').select('id,supplier,article_reference,quantity,unit,reference,status');if(error){console.error(error);notify('Impossible de charger les données publiques : '+error.message);return false}shipments=(data||[]).map(s=>({id:s.id,ref:s.article_reference||'',supplier:s.supplier||'',container:s.reference||'',quantity:s.quantity??'',unit:s.unit||'',status:s.status||'Commandée',mode:'',originPort:'',destPort:'',eta:'',goods:''}));renderPublic();return true}
+function renderPublic(){const rows=shipments.slice();const q=$('search').value.trim().toLocaleLowerCase('fr');const filtered=q?rows.filter(s=>[s.ref,s.supplier,s.container].some(v=>String(v||'').toLocaleLowerCase('fr').includes(q))):rows;$('listCount').textContent=${filtered.length} chargement(s);$('footerCount').textContent=Affichage de ${filtered.length} chargement(s);$('emptyState').style.display=filtered.length?'none':'block';document.querySelector('.table-wrap').style.display=filtered.length?'block':'none';$('shipmentRows').innerHTML=filtered.map(s=><tr><td><div class="ref">${escapeHtml(s.ref||'—')}</div><div class="supplier">${escapeHtml(s.supplier||'—')}</div></td><td></td><td><div style="font-weight:650;font-size:12px">${escapeHtml(s.container||'—')}</div></td><td><div class="quantity">${s.quantity!==''?Number(s.quantity).toLocaleString('fr-FR'): '—'} <span class="qty-unit">${escapeHtml(s.unit)}</span></div></td><td></td><td></td><td><span class="status ${STATUS_CLASS[s.status]||'s-commandee'}">${escapeHtml(s.status)}</span></td><td></td></tr>).join('');}
+
+async function persist(){if(!isAdmin){notify('Connexion administrateur requise.');return false}try{const payload=shipments.map(s=>({id:s.id,ref:s.ref,reference:s.container||'',origin:s.originPort||'',product:s.goods||'',supplier:s.supplier,country:s.country,mode:s.mode,incoterm:s.incoterm,goods:s.goods,article_names:s.articleNames||'',quantity:s.quantity===''?null:s.quantity,unit:s.unit,container:s.container,bl:s.bl,invoice:s.invoice,origin_port:s.originPort,dest_port:s.destPort,transporter:s.transporter,order_date:s.orderDate||null,load_date:s.loadDate||null,etd:s.etd||null,eta:s.eta||null,actual_arrival:s.actualArrival||null,status:s.status,surestaries_start_date:s.surestariesStartDate||null,terminal_out_date:s.terminalOutDate||null,free_days:s.freeDays===''?null:s.freeDays,daily_rate:s.dailyRate===''?null:s.dailyRate,container_count:s.containerCount||1,currency:s.currency||'MAD',notes:s.notes||'',updated_at:new Date().toISOString()}));if(payload.length){const {error}=await db.from('shipments').upsert(payload,{onConflict:'id'});if(error)throw error} $('lastUpdated').textContent='Dernière sauvegarde Supabase : '+new Date().toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'});return true}catch(e){console.error(e);notify('Erreur Supabase : '+e.message);return false}}
+function uid(){return crypto.randomUUID()}
+function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function fmtDate(v){if(!v)return '—';const d=new Date(v+'T00:00:00');return isNaN(d)?'—':d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'}).replace('.','')}
+function daysLate(s){return s.status!=='Livré'&&s.eta&&s.eta<todayISO()&&!s.actualArrival?true:false}
+function dayDifference(start,end){if(!start||!end)return 0;const a=Date.parse(start+'T00:00:00Z'),b=Date.parse(end+'T00:00:00Z');if(!Number.isFinite(a)||!Number.isFinite(b))return 0;return Math.round((b-a)/86400000)}
+function calcSurestaries(s){const start=s.surestariesStartDate||'';const end=s.terminalOutDate||todayISO();const hasFree=s.freeDays!==''&&s.freeDays!=null&&Number.isFinite(Number(s.freeDays))&&Number(s.freeDays)>=0;const hasRate=s.dailyRate!==''&&s.dailyRate!=null&&Number.isFinite(Number(s.dailyRate))&&Number(s.dailyRate)>=0;const hasStart=Boolean(start);const totalDays=hasStart?Math.max(0,dayDifference(start,end)+1):0;const freeDays=hasFree?Math.floor(Number(s.freeDays)):null;const chargeableDays=hasStart&&hasFree?Math.max(0,totalDays-freeDays):0;const count=Math.max(1,Math.floor(Number(s.containerCount)||1));const rate=hasRate?Number(s.dailyRate):null;const amount=hasRate&&hasStart&&hasFree?chargeableDays*rate*count:null;return {hasStart,hasFree,hasRate,configured:hasStart&&hasFree,totalDays,freeDays,chargeableDays,count,rate,amount,currency:s.currency||'MAD',end,ongoing:hasStart&&!s.terminalOutDate};}
+function fmtMoney(value,currency){if(value==null||!Number.isFinite(Number(value)))return 'À calculer';return Number(value).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' '+(currency||'MAD')}
+function surestariesLabel(s){const c=calcSurestaries(s);if(!c.hasStart)return '—';if(!c.hasFree)return '<span class="subtext">Franchise à renseigner</span>';if(!c.hasRate&&c.chargeableDays>0)return <span class="surestaries-chip">${c.chargeableDays} j facturables</span><div class="subtext">Tarif manquant</div>;if(c.amount!=null&&c.amount>0)return <div class="money-main">${escapeHtml(fmtMoney(c.amount,c.currency))}</div><div class="subtext">${c.chargeableDays} j × ${c.count} cont.</div>;if(c.chargeableDays===0)return <span class="surestaries-chip clear">Franchise en cours</span>;return '—';}
+function isActive(s){return s.status!=='Livré'}
+function isInTransit(s){return ['Chargé','En transit','Arrivé au port'].includes(s.status)}
+function notify(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2600)}
+function setStatusOptions(){ $('fStatus').innerHTML=STATUSES.map(s=><option>${escapeHtml(s)}</option>).join(''); $('statusFilter').innerHTML='<option value="">Tous les statuts</option>'+STATUSES.map(s=><option>${escapeHtml(s)}</option>).join('') }
+function render(){
+ const active=shipments.filter(isActive).length, transit=shipments.filter(isInTransit).length, customs=shipments.filter(s=>s.status==='Dédouanement').length, late=shipments.filter(daysLate).length;
+ const surestariesActive=shipments.filter(s=>{const c=calcSurestaries(s);return c.ongoing&&c.configured&&c.chargeableDays>0}).length;
+ $('metricActive').textContent=active;$('metricTransit').textContent=transit;$('metricCustoms').textContent=customs;$('metricLate').textContent=late;$('lateMetric').classList.toggle('alert',late>0);$('metricSurestaries').textContent=surestariesActive;$('surestariesMetric').classList.toggle('alert',surestariesActive>0);
+ renderAlerts();
+ let rows=shipments.slice();const q=$('search').value.trim().toLocaleLowerCase('fr');const status=$('statusFilter').value;const mode=$('modeFilter').value;
+ if(q)rows=rows.filter(s=>[s.ref,s.supplier,s.container,s.bl,s.goods,s.articleNames,s.country,s.invoice,s.originPort,s.destPort,s.transporter].some(v=>String(v||'').toLocaleLowerCase('fr').includes(q)));
+ if(status)rows=rows.filter(s=>s.status===status);if(mode)rows=rows.filter(s=>s.mode===mode);
+ const sort=$('sortFilter').value;if(sort==='eta')rows.sort((a,b)=>(a.eta||'9999').localeCompare(b.eta||'9999'));else if(sort==='newest')rows.sort((a,b)=>(b.updatedAt||b.createdAt||'').localeCompare(a.updatedAt||a.createdAt||''));else rows.sort((a,b)=>(a.supplier||'').localeCompare(b.supplier||'','fr'));
+ $('listCount').textContent=${rows.length} chargement${rows.length!==1?'s':''} affiché${rows.length!==1?'s':''};$('footerCount').textContent=Affichage de ${rows.length} sur ${shipments.length} chargement${shipments.length!==1?'s':''};
+ $('emptyState').style.display=rows.length?'none':'block';document.querySelector('.table-wrap').style.display=rows.length?'block':'none';
+ $('shipmentRows').innerHTML=rows.map(s=>{
+   const route=[s.originPort,s.destPort].filter(Boolean);const routeText=route.length?route.map(escapeHtml).join(' → '):'Trajet à préciser';
+   const quant=s.quantity!==''&&s.quantity!=null?${Number(s.quantity).toLocaleString('fr-FR',{maximumFractionDigits:2})} <span class="qty-unit">${escapeHtml(s.unit||'m²')}</span>:'—';
+   const lateLabel=daysLate(s)?<span class="late">En retard (${dayDifference(s.eta,todayISO())} j)</span>:'';
+   const surestariesText=surestariesLabel(s);
+   const articlePreview=String(s.articleNames||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean).slice(0,2).join(' · ');
+   return <tr><td><div class="ref">${escapeHtml(s.ref||'Sans référence')}</div><div class="supplier">${escapeHtml(s.supplier||'Fournisseur non précisé')}</div><div class="subtext">${escapeHtml(s.goods||s.country||'')}</div>${articlePreview?<div class="subtext" title="${escapeHtml(s.articleNames)}" style="max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Articles : ${escapeHtml(articlePreview)}</div>:''}</td><td><div class="route">${routeText}</div><div class="subtext">${escapeHtml(s.mode||'')} ${s.incoterm?'· '+escapeHtml(s.incoterm):''}</div></td><td><div style="font-weight:650;font-size:12px">${escapeHtml(s.container||'—')}</div></td><td><div class="quantity">${quant}</div></td><td><div class="date">${fmtDate(s.eta)}</div>${lateLabel}</td><td>${surestariesText}</td><td><span class="status ${STATUS_CLASS[s.status]||'s-commandee'}">${escapeHtml(s.status||'Commandée')}</span></td><td><div class="row-actions"><button class="icon-btn" data-action="edit" data-id="${escapeHtml(s.id)}" title="Modifier" aria-label="Modifier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m14 5 5 5M4 20l4-.8L19 8a2.1 2.1 0 0 0-3-3L5 16l-1 4Z"/></svg></button><button class="icon-btn" data-action="delete" data-id="${escapeHtml(s.id)}" title="Supprimer" aria-label="Supprimer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M10 11v6M14 11v6M5 7l1 14h12l1-14M9 7V4h6v3"/></svg></button></div></td></tr>;
+ }).join('');
 }
+function renderAlerts(){const alerts=[];const today=todayISO();shipments.forEach(s=>{const label=${s.ref||'Sans référence'} — ${s.supplier||'Fournisseur non précisé'};if(daysLate(s)){const delay=dayDifference(s.eta,today);alerts.push({level:'danger',title:'Retard d’arrivée',text:${label} : arrivée prévue le ${fmtDate(s.eta)}, dépassée de ${delay} jour(s).})}const c=calcSurestaries(s);if(c.hasStart&&!c.hasFree){alerts.push({level:'warning',title:'Franchise à renseigner',text:${label} : indiquez le nombre de jours gratuits prévu par le transporteur pour activer le calcul.});return}if(!c.configured)return;if(c.ongoing&&c.chargeableDays>0){const amount=c.hasRate? Coût estimé à ce jour : ${fmtMoney(c.amount,c.currency)}.:' Renseignez le tarif journalier pour calculer le montant.';alerts.push({level:'danger',title:'Surestaries en cours',text:${label} : ${c.chargeableDays} jour(s) facturable(s) pour ${c.count} conteneur(s).${amount}})}else if(c.ongoing&&c.chargeableDays===0&&c.freeDays>0&&c.totalDays>=Math.max(1,c.freeDays-1)){const left=Math.max(0,c.freeDays-c.totalDays);alerts.push({level:'warning',title:left===0?'Franchise échue aujourd’hui':'Franchise bientôt échue',text:${label} : ${left===0?'le dernier jour gratuit est atteint.':'il reste environ '+left+' jour(s) de franchise.'} Vérifiez la date de sortie du terminal.})}});const panel=$('alertPanel'),list=$('alertList');if(!alerts.length){panel.hidden=true;list.innerHTML='';return}panel.hidden=false;$('alertSummary').textContent=${alerts.length} alerte(s) nécessitent votre attention.;list.innerHTML=alerts.map(a=><article class="alert-item ${a.level}"><strong>${escapeHtml(a.title)}</strong><p>${escapeHtml(a.text)}</p></article>).join('')}
+function updateSurestariesPreview(){const c=calcSurestaries({surestariesStartDate:$('fSurestariesStartDate').value,terminalOutDate:$('fTerminalOutDate').value,freeDays:$('fFreeDays').value,dailyRate:$('fDailyRate').value,containerCount:$('fContainerCount').value,currency:$('fCurrency').value});$('previewChargeDays').textContent=c.hasStart&&c.hasFree?${c.chargeableDays} jour(s):'À renseigner';$('previewChargeAmount').textContent=c.amount==null?'À calculer':fmtMoney(c.amount,c.currency);$('previewUntil').textContent=c.hasStart?fmtDate(c.end):'—'}
+function openModal(id){if(!isAdmin){notify('Connexion administrateur requise.');return}editingId=id||null;const form=$('shipmentForm');form.reset();const s=id?shipments.find(x=>x.id===id):null;$('modalTitle').textContent=s?'Modifier le chargement':'Nouveau chargement';$('deleteShipment').style.display=s?'inline-flex':'none';
+ const vals={fRef:s?.ref||makeRef(),fSupplier:s?.supplier||'',fCountry:s?.country||'',fMode:s?.mode||'Maritime',fIncoterm:s?.incoterm||'',fGoods:s?.goods||'',fArticleNames:s?.articleNames||'',fQuantity:s?.quantity??'',fUnit:s?.unit||'m²',fContainer:s?.container||'',fBl:s?.bl||'',fInvoice:s?.invoice||'',fOriginPort:s?.originPort||'',fDestPort:s?.destPort||'',fTransporter:s?.transporter||'',fOrderDate:s?.orderDate||todayISO(),fLoadDate:s?.loadDate||'',fEtd:s?.etd||'',fEta:s?.eta||'',fActualArrival:s?.actualArrival||'',fStatus:s?.status||'Commandée',fSurestariesStartDate:s?.surestariesStartDate||'',fTerminalOutDate:s?.terminalOutDate||'',fFreeDays:s?.freeDays??'',fDailyRate:s?.dailyRate??'',fContainerCount:s?.containerCount??1,fCurrency:s?.currency||'MAD',fNotes:s?.notes||''};
+ Object.entries(vals).forEach(([id,v])=>$(id).value=v);$('modalOverlay').classList.add('open');document.body.style.overflow='hidden';updateSurestariesPreview();setTimeout(()=>$('fSupplier').focus(),40)}
+function closeModal(){ $('modalOverlay').classList.remove('open');document.body.style.overflow='';editingId=null }
+function makeRef(){const y=new Date().getFullYear();let n=shipments.length+1;let ref;do{ref=IMP-${y}-${String(n).padStart(3,'0')};n++}while(shipments.some(s=>s.ref===ref));return ref}
+function fieldData(){const names={ref:'fRef',supplier:'fSupplier',country:'fCountry',mode:'fMode',incoterm:'fIncoterm',goods:'fGoods',articleNames:'fArticleNames',quantity:'fQuantity',unit:'fUnit',container:'fContainer',bl:'fBl',invoice:'fInvoice',originPort:'fOriginPort',destPort:'fDestPort',transporter:'fTransporter',orderDate:'fOrderDate',loadDate:'fLoadDate',etd:'fEtd',eta:'fEta',actualArrival:'fActualArrival',status:'fStatus',surestariesStartDate:'fSurestariesStartDate',terminalOutDate:'fTerminalOutDate',freeDays:'fFreeDays',dailyRate:'fDailyRate',containerCount:'fContainerCount',currency:'fCurrency',notes:'fNotes'};const out={};for(const[k,id]of Object.entries(names))out[k]=$(id).value.trim();out.quantity=out.quantity===''?'':Number(out.quantity);out.freeDays=out.freeDays===''?'':Number(out.freeDays);out.dailyRate=out.dailyRate===''?'':Number(out.dailyRate);out.containerCount=out.containerCount===''?1:Number(out.containerCount);return out}
+$('shipmentForm').addEventListener('submit',e=>{e.preventDefault();const wasEditing=Boolean(editingId);const f=fieldData();const dupe=shipments.some(s=>s.ref.toLocaleLowerCase()===f.ref.toLocaleLowerCase()&&s.id!==editingId);if(dupe){notify('Cette référence existe déjà. Choisissez une autre référence.');$('fRef').focus();return}const now=new Date().toISOString();if(editingId){const i=shipments.findIndex(s=>s.id===editingId);if(i>=0)shipments[i]={...shipments[i],...f,updatedAt:now}}else shipments.unshift({...f,id:uid(),createdAt:now,updatedAt:now});persist().then(ok=>{if(ok){render();closeModal();notify(wasEditing?'Chargement mis à jour.':'Chargement ajouté.')}})});
+async function deleteShipment(id){if(!isAdmin){notify('Connexion administrateur requise.');return}const s=shipments.find(x=>x.id===id);if(!s)return;if(!confirm(Supprimer le chargement ${s.ref||''} ? Cette action est définitive.))return;const {error}=await db.from('shipments').delete().eq('id',id);if(error){notify('Erreur Supabase : '+error.message);return}shipments=shipments.filter(x=>x.id!==id);render();closeModal();notify('Chargement supprimé.')}
+$('shipmentRows').addEventListener('click',e=>{const b=e.target.closest('button[data-action]');if(!b)return;if(b.dataset.action==='edit')openModal(b.dataset.id);if(b.dataset.action==='delete')deleteShipment(b.dataset.id)});
+$('newShipment').addEventListener('click',()=>openModal());$('emptyAdd').addEventListener('click',()=>openModal());$('closeModal').addEventListener('click',closeModal);$('cancelModal').addEventListener('click',closeModal);$('modalOverlay').addEventListener('click',e=>{if(e.target===$('modalOverlay'))closeModal()});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('modalOverlay').classList.contains('open'))closeModal()});$('deleteShipment').addEventListener('click',()=>{if(editingId)deleteShipment(editingId)});
+['search','statusFilter','modeFilter','sortFilter'].forEach(id=>$(id).addEventListener(id==='search'?'input':'change',()=>isAdmin?render():renderPublic()));$('resetFilters').addEventListener('click',()=>{$('search').value='';$('statusFilter').value='';$('modeFilter').value='';$('sortFilter').value='eta';render()});
+function download(name,content,type){const blob=new Blob([content],{type});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+function csvEscape(x){const v=String(x??'');return '"'+v.replace(/"/g,'""')+'"'}
+$('exportCsv').addEventListener('click',()=>{const headers=['Référence','Fournisseur','Pays origine','Transport','Incoterm','Marchandise / catégorie','Noms des articles','Quantité totale','Unité','Conteneur','BL','Facture','Départ','Destination','Transitaire','Date commande','Date chargement','ETD','ETA','Arrivée réelle','Statut','Début compteur surestaries','Sortie terminal','Franchise (jours)','Tarif/jour/conteneur','Nombre conteneurs','Devise','Notes'];const keys=['ref','supplier','country','mode','incoterm','goods','articleNames','quantity','unit','container','bl','invoice','originPort','destPort','transporter','orderDate','loadDate','etd','eta','actualArrival','status','surestariesStartDate','terminalOutDate','freeDays','dailyRate','containerCount','currency','notes'];const csv='\ufeff'+[headers,...shipments.map(s=>keys.map(k=>s[k]??''))].map(row=>row.map(csvEscape).join(';')).join('\r\n');download(suivi-import-${todayISO()}.csv,csv,'text/csv;charset=utf-8;');notify('Export CSV prêt à être ouvert dans Excel.')});
+$('backupBtn').addEventListener('click',()=>{download(sauvegarde-suivi-import-${todayISO()}.json,JSON.stringify({app:'Suivi Import',version:1,exportedAt:new Date().toISOString(),shipments},null,2),'application/json');notify('Sauvegarde téléchargée.')});
+$('restoreBtn').addEventListener('click',()=>$('restoreFile').click());
+$('restoreFile').addEventListener('change',async e=>{const file=e.target.files?.[0];if(!file)return;try{const obj=JSON.parse(await file.text());const arr=Array.isArray(obj)?obj:obj.shipments;if(!Array.isArray(arr))throw new Error('Format non reconnu');if(!confirm(Importer ${arr.length} chargement(s) ? Les références déjà présentes seront remplacées par celles de la sauvegarde.))return;const map=new Map(shipments.map(s=>[s.ref,s]));arr.forEach(s=>{if(!s||!s.ref||!s.supplier)return;const existing=map.get(s.ref);map.set(s.ref,{...existing,...s,id:existing?.id||s.id||uid(),updatedAt:new Date().toISOString()})});shipments=Array.from(map.values());persist();render();notify('Sauvegarde importée avec succès.')}catch(err){notify('Fichier invalide. Choisissez une sauvegarde JSON Suivi Import.')}finally{e.target.value=''}});
+// Le calcul se met à jour immédiatement dans le formulaire.
+['fSurestariesStartDate','fTerminalOutDate','fFreeDays','fDailyRate','fContainerCount','fCurrency'].forEach(id=>$(id).addEventListener('input',updateSurestariesPreview));
+// Recalcule les retards lorsque l'application revient au premier plan.
+window.addEventListener('focus',render);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)render()});
+$('adminLoginBtn').addEventListener('click',()=>$('loginOverlay').classList.add('open'));$('closeLogin').addEventListener('click',()=>$('loginOverlay').classList.remove('open'));$('cancelLogin').addEventListener('click',()=>$('loginOverlay').classList.remove('open'));$('loginOverlay').addEventListener('click',e=>{if(e.target===$('loginOverlay'))$('loginOverlay').classList.remove('open')});$('loginForm').addEventListener('submit',async e=>{e.preventDefault();$('loginError').textContent='';const {data,error}=await db.auth.signInWithPassword({email:$('loginEmail').value.trim(),password:$('loginPassword').value});if(error){$('loginError').textContent='Connexion impossible : '+error.message;return}$('loginOverlay').classList.remove('open');setMode(true);await loadFromSupabase();notify('Connexion administrateur réussie.');});$('logoutBtn').addEventListener('click',async()=>{await db.auth.signOut();setMode(false);shipments=[];await loadPublicShipments();notify('Déconnexion effectuée.');});
+db.auth.onAuthStateChange(async(_event,session)=>{const admin=!!session?.user;setMode(admin);if(admin)await loadFromSupabase();else await loadPublicShipments();});
+setStatusOptions();setMode(false);loadPublicShipments();
+})();
+</script>
+<script>
+(function(){
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function(){ navigator.serviceWorker.register('./sw.js').catch(function(){}); });
+  }
+  let deferredPrompt=null;
+  const btn=document.getElementById('installApp');
+  window.addEventListener('beforeinstallprompt', function(e){
+    e.preventDefault(); deferredPrompt=e; if(btn) btn.style.display='inline-flex';
+  });
+  if(btn) btn.addEventListener('click', async function(){
+    if(!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt=null; btn.style.display='none';
+  });
+  window.addEventListener('appinstalled', function(){ if(btn) btn.style.display='none'; });
+})();
+</script>
+</body>
+</html>
