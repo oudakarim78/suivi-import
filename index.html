@@ -188,7 +188,55 @@ function isActive(s){return s.status!=='Livré'}
 function isInTransit(s){return ['Chargé','En transit','Arrivé au port'].includes(s.status)}
 function notify(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2600)}
 function setStatusOptions(){ $('fStatus').innerHTML=STATUSES.map(s=><option>${escapeHtml(s)}</option>).join(''); $('statusFilter').innerHTML='<option value="">Tous les statuts</option>'+STATUSES.map(s=><option>${escapeHtml(s)}</option>).join('') }
-function render(){
+function renderPublic(){
+  const rows=shipments.slice();
+  const q=$('search').value.trim().toLocaleLowerCase('fr');
+
+  const filtered=q?rows.filter(s=>
+    [s.ref,s.supplier,s.container,s.articleNames]
+    .some(v=>String(v||'').toLocaleLowerCase('fr').includes(q))
+  ):rows;
+
+  $('listCount').textContent=`${filtered.length} chargement(s)`;
+  $('footerCount').textContent=`Affichage de ${filtered.length} chargement(s)`;
+  $('emptyState').style.display=filtered.length?'none':'block';
+  document.querySelector('.table-wrap').style.display=filtered.length?'block':'none';
+
+  $('shipmentRows').innerHTML=filtered.map(s=>`
+    <tr>
+      <td>
+        <div class="ref">${escapeHtml(s.ref||'—')}</div>
+        <div class="supplier">${escapeHtml(s.supplier||'—')}</div>
+        <div class="subtext" style="margin-top:7px;font-weight:700;color:#3157d5">
+          ARTICLES :
+        </div>
+        <div style="white-space:pre-line;font-size:12px;line-height:1.7;max-width:300px">
+          ${escapeHtml(s.articleNames||'Articles non renseignés')}
+        </div>
+      </td>
+      <td></td>
+      <td>
+        <div style="font-weight:650;font-size:12px">
+          ${escapeHtml(s.container||'—')}
+        </div>
+      </td>
+      <td>
+        <div class="quantity">
+          ${s.quantity!==''?Number(s.quantity).toLocaleString('fr-FR'):'—'}
+          <span class="qty-unit">${escapeHtml(s.unit)}</span>
+        </div>
+      </td>
+      <td></td>
+      <td></td>
+      <td>
+        <span class="status ${STATUS_CLASS[s.status]||'s-commandee'}">
+          ${escapeHtml(s.status)}
+        </span>
+      </td>
+      <td></td>
+    </tr>
+  `).join('');
+}
  const active=shipments.filter(isActive).length, transit=shipments.filter(isInTransit).length, customs=shipments.filter(s=>s.status==='Dédouanement').length, late=shipments.filter(daysLate).length;
  const surestariesActive=shipments.filter(s=>{const c=calcSurestaries(s);return c.ongoing&&c.configured&&c.chargeableDays>0}).length;
  $('metricActive').textContent=active;$('metricTransit').textContent=transit;$('metricCustoms').textContent=customs;$('metricLate').textContent=late;$('lateMetric').classList.toggle('alert',late>0);$('metricSurestaries').textContent=surestariesActive;$('surestariesMetric').classList.toggle('alert',surestariesActive>0);
