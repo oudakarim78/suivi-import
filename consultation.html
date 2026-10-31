@@ -15,6 +15,37 @@ th,td{padding:12px;border-bottom:1px solid #ddd;text-align:left}
 th{background:#17365d;color:white}
 tr:hover{background:#f1f5fa}
 #message{padding:12px;margin:12px 0}
+  .filtres {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 15px 0;
+}
+
+.filtres input,
+.filtres select,
+.filtres button {
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.filtres input {
+  flex: 2;
+  min-width: 220px;
+}
+
+.filtres select {
+  flex: 1;
+  min-width: 180px;
+}
+
+.filtres button {
+  background: #17365d;
+  color: white;
+  cursor: pointer;
+}
 </style>
 </head>
 <body>
@@ -22,6 +53,27 @@ tr:hover{background:#f1f5fa}
 <h2>Suivi des importations</h2>
 <p>Page de consultation — accès en lecture seule</p>
 <div id="message">Chargement des dossiers...</div>
+  <div class="filtres">
+  <input
+    type="search"
+    id="recherche"
+    placeholder="Rechercher fournisseur, conteneur, BL, article..."
+  >
+
+  <select id="filtreStatut">
+    <option value="">Tous les statuts</option>
+    <option value="À préparer">À préparer</option>
+    <option value="Commandée">Commandée</option>
+    <option value="En production">En production</option>
+    <option value="Prête à expédier">Prête à expédier</option>
+    <option value="En transit">En transit</option>
+    <option value="En douane">En douane</option>
+    <option value="Livrée">Livrée</option>
+    <option value="Annulée">Annulée</option>
+  </select>
+
+  <button type="button" id="reinitialiser">Réinitialiser</button>
+</div>
 <div class="table-wrap">
 <table>
 <thead>
@@ -56,7 +108,7 @@ function safe(value) {
     '"':'&quot;',"'":'&#39;'
   })[c]);
 }
-
+let tousLesDossiers = [];
 async function chargerDossiers() {
   const message = document.getElementById('message');
   const tbody = document.getElementById('dossiers');
