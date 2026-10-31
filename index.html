@@ -194,6 +194,18 @@ async function loadFromSupabase(){
  const {data,error}=await db.from('shipments').select('*').order('created_at',{ascending:false});
  if(error){console.error(error);notify('Erreur Supabase : '+error.message);return false}
  shipments=(data||[]).map(s=>({articles:s.articles||[],...s,ref:s.reference??s.ref,articleNames:s.article_names??'',articleReference:s.article_reference??'',originPort:s.origin_port??'',destPort:s.dest_port??'',orderDate:s.order_date??'',loadDate:s.load_date??'',actualArrival:s.actual_arrival??'',surestariesStartDate:s.surestaries_start_date??'',terminalOutDate:s.terminal_out_date??'',freeDays:s.free_days??'',dailyRate:s.daily_rate??'',containerCount:s.container_count??1,updatedAt:s.updated_at??s.created_at}));
+
+if(currentRole==='admin'){
+ const {data:contacts,error:contactError}=await db.from('shipment_contacts').select('*');
+ if(contactError){console.error(contactError);notify('Erreur de lecture des contacts : '+contactError.message);}
+ else{
+  const contactMap=new Map((contacts||[]).map(c=>[c.shipment_id,c]));
+  shipments=shipments.map(s=>{
+   const c=contactMap.get(s.id)||{};
+   return {...s,transporterPhone:c.transporter_phone||'',transitCompany:c.transit_company||'',transitPhone:c.transit_phone||''};
+  });
+ }
+}({articles:s.articles||[],...s,ref:s.reference??s.ref,articleNames:s.article_names??'',articleReference:s.article_reference??'',originPort:s.origin_port??'',destPort:s.dest_port??'',orderDate:s.order_date??'',loadDate:s.load_date??'',actualArrival:s.actual_arrival??'',surestariesStartDate:s.surestaries_start_date??'',terminalOutDate:s.terminal_out_date??'',freeDays:s.free_days??'',dailyRate:s.daily_rate??'',containerCount:s.container_count??1,updatedAt:s.updated_at??s.created_at}));
  $('lastUpdated').textContent='Données Supabase : '+new Date().toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'});render();return true
 }
 async function saveShipment(s,isNew){
