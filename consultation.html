@@ -5,37 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Consultation des importations</title>
-  .filtres {
-  align-items: center;
-  gap: 8px;
-}
 
-.filtres input {
-  flex: 0 1 300px;
-  min-width: 180px;
-  max-width: 300px;
-  padding: 9px 12px;
-}
-
-.filtres select {
-  flex: 0 1 190px;
-  min-width: 160px;
-  max-width: 190px;
-  padding: 9px 12px;
-}
-
-.filtres button {
-  padding: 9px 14px;
-}
-
-@media (max-width: 600px) {
-  .filtres input,
-  .filtres select {
-    max-width: 100%;
-    width: 100%;
-    flex: 1 1 100%;
-  }
-}
 <style>
 body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f9;color:#263445}
 h2{color:#17365d}
@@ -171,6 +141,47 @@ tr:hover{background:#f1f5fa}
     gap: 8px;
   }
 }
+  /* Filtres horizontaux */
+.filtres {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 10px;
+  margin: 15px 0;
+}
+
+.filtres input {
+  flex: 2 1 350px;
+  min-width: 0;
+  max-width: 350px;
+  padding: 9px 12px;
+}
+
+.filtres select {
+  flex: 1 1 220px;
+  min-width: 170px;
+  max-width: 220px;
+  padding: 9px 12px;
+}
+
+.filtres button {
+  padding: 9px 14px;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .filtres {
+    flex-wrap: wrap;
+  }
+
+  .filtres input,
+  .filtres select {
+    flex: 1 1 100%;
+    max-width: 100%;
+    width: 100%;
+  }
+}
 </style>
 </head>
 <body>
@@ -200,6 +211,7 @@ tr:hover{background:#f1f5fa}
 </select>
 
   <button type="button" id="reinitialiser">Réinitialiser</button>
+    </div>
 <div id="dossiers"></div>
     <div id="modalArticles" class="modal-articles">
   <div class="modal-contenu">
@@ -208,6 +220,7 @@ tr:hover{background:#f1f5fa}
     <div id="contenuArticles"></div>
   </div>
 </div>
+  </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL = 'https://mnyokiniupvtzesdmwit.supabase.co';
