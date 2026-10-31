@@ -109,6 +109,23 @@ function safe(value) {
   })[c]);
 }
 let tousLesDossiers = [];
+  function appliquerFiltres() {
+  const recherche = document.getElementById('recherche').value.toLowerCase().trim();
+  const statut = document.getElementById('filtreStatut').value.toLowerCase();
+
+  const lignes = document.querySelectorAll('#dossiers tr');
+
+  lignes.forEach(ligne => {
+    const texte = ligne.textContent.toLowerCase();
+    const celluleStatut = ligne.cells[8];
+    const statutLigne = celluleStatut ? celluleStatut.textContent.toLowerCase().trim() : '';
+
+    const correspondRecherche = texte.includes(recherche);
+    const correspondStatut = !statut || statutLigne === statut;
+
+    ligne.style.display = correspondRecherche && correspondStatut ? '' : 'none';
+  });
+}
 async function chargerDossiers() {
   const message = document.getElementById('message');
   const tbody = document.getElementById('dossiers');
@@ -122,7 +139,7 @@ async function chargerDossiers() {
     message.textContent = 'Erreur de chargement : ' + error.message;
     return;
   }
-
+tousLesDossiers = data || [];
   if (!data || data.length === 0) {
     message.textContent = 'Aucun dossier disponible.';
     return;
@@ -173,7 +190,15 @@ async function chargerDossiers() {
 
   message.textContent = data.length + ' dossier(s) disponible(s).';
 }
+document.getElementById('recherche').addEventListener('input', appliquerFiltres);
 
+document.getElementById('filtreStatut').addEventListener('change', appliquerFiltres);
+
+document.getElementById('reinitialiser').addEventListener('click', () => {
+  document.getElementById('recherche').value = '';
+  document.getElementById('filtreStatut').value = '';
+  appliquerFiltres();
+});
 chargerDossiers();
 </script>
 </body>
