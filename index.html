@@ -193,20 +193,48 @@ function loadData(){return []}
 async function loadFromSupabase(){
  const {data,error}=await db.from('shipments').select('*').order('created_at',{ascending:false});
  if(error){console.error(error);notify('Erreur Supabase : '+error.message);return false}
- shipments=(data||[]).map(s=>({articles:s.articles||[],...s,ref:s.reference??s.ref,articleNames:s.article_names??'',articleReference:s.article_reference??'',originPort:s.origin_port??'',destPort:s.dest_port??'',orderDate:s.order_date??'',loadDate:s.load_date??'',actualArrival:s.actual_arrival??'',surestariesStartDate:s.surestaries_start_date??'',terminalOutDate:s.terminal_out_date??'',freeDays:s.free_days??'',dailyRate:s.daily_rate??'',containerCount:s.container_count??1,updatedAt:s.updated_at??s.created_at}));
 
-if(currentRole==='admin'){
- const {data:contacts,error:contactError}=await db.from('shipment_contacts').select('*');
- if(contactError){console.error(contactError);notify('Erreur de lecture des contacts : '+contactError.message);}
- else{
-  const contactMap=new Map((contacts||[]).map(c=>[c.shipment_id,c]));
-  shipments=shipments.map(s=>{
-   const c=contactMap.get(s.id)||{};
-   return {...s,transporterPhone:c.transporter_phone||'',transitCompany:c.transit_company||'',transitPhone:c.transit_phone||''};
-  });
+ shipments=(data||[]).map(s=>({
+  articles:s.articles||[],
+  ...s,
+  ref:s.reference??s.ref,
+  articleNames:s.article_names??'',
+  articleReference:s.article_reference??'',
+  originPort:s.origin_port??'',
+  destPort:s.dest_port??'',
+  orderDate:s.order_date??'',
+  loadDate:s.load_date??'',
+  actualArrival:s.actual_arrival??'',
+  surestariesStartDate:s.surestaries_start_date??'',
+  terminalOutDate:s.terminal_out_date??'',
+  freeDays:s.free_days??'',
+  dailyRate:s.daily_rate??'',
+  containerCount:s.container_count??1,
+  updatedAt:s.updated_at??s.created_at
+ }));
+
+ if(currentRole==='admin'){
+  const {data:contacts,error:contactError}=await db.from('shipment_contacts').select('*');
+  if(contactError){
+   console.error(contactError);
+   notify('Erreur de lecture des contacts : '+contactError.message);
+  }else{
+   const contactMap=new Map((contacts||[]).map(c=>[c.shipment_id,c]));
+   shipments=shipments.map(s=>{
+    const c=contactMap.get(s.id)||{};
+    return {
+     ...s,
+     transporterPhone:c.transporter_phone||'',
+     transitCompany:c.transit_company||'',
+     transitPhone:c.transit_phone||''
+    };
+   });
+  }
  }
-}({articles:s.articles||[],...s,ref:s.reference??s.ref,articleNames:s.article_names??'',articleReference:s.article_reference??'',originPort:s.origin_port??'',destPort:s.dest_port??'',orderDate:s.order_date??'',loadDate:s.load_date??'',actualArrival:s.actual_arrival??'',surestariesStartDate:s.surestaries_start_date??'',terminalOutDate:s.terminal_out_date??'',freeDays:s.free_days??'',dailyRate:s.daily_rate??'',containerCount:s.container_count??1,updatedAt:s.updated_at??s.created_at}));
- $('lastUpdated').textContent='Données Supabase : '+new Date().toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'});render();return true
+
+ $('lastUpdated').textContent='Données Supabase : '+new Date().toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'});
+ render();
+ return true;
 }
 async function saveShipment(s,isNew){
  const row={articles:s.articles||[],reference:s.ref,supplier:s.supplier,country:s.country,mode:s.mode,incoterm:s.incoterm,goods:s.goods,article_names:s.articleNames||'',article_reference:s.articleReference||'',quantity:s.quantity===''?null:s.quantity,unit:s.unit,container:s.container,bl:s.bl,invoice:s.invoice,origin_port:s.originPort,dest_port:s.destPort,transporter:s.transporter,order_date:s.orderDate||null,load_date:s.loadDate||null,etd:s.etd||null,eta:s.eta||null,actual_arrival:s.actualArrival||null,status:s.status,surestaries_start_date:s.surestariesStartDate||null,terminal_out_date:s.terminalOutDate||null,free_days:s.freeDays===''?null:s.freeDays,daily_rate:s.dailyRate===''?null:s.dailyRate,container_count:s.containerCount||1,currency:s.currency||'MAD',notes:s.notes||'',updated_at:new Date().toISOString()};
