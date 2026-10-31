@@ -403,7 +403,33 @@ function fieldData() {
 
   return out;
 }
-async function deleteShipment(id){if(currentRole!=='admin'){notify('Accès en lecture seule.');return}const s=shipments.find(x=>x.id===id);if(!s)return;if(!confirm(`Supprimer le chargement ${s.ref||''} ? Cette action est définitive.`))return;const {error}=await db.from('shipments').delete().eq('id',id);if(error){notify('Erreur Supabase : '+error.message);return}shipments=shipments.filter(x=>x.id!==id);render();closeModal();notify('Chargement supprimé.')}
+$('shipmentForm').addEventListener('submit', async e => {
+  e.preventDefault();
+
+  if (currentRole !== 'admin') return;
+
+  const button = $('shipmentForm').querySelector('button[type="submit"]');
+  button.disabled = true;
+  button.textContent = 'Enregistrement…';
+
+  try {
+    const s = fieldData();
+    const isNew = !editingId;
+
+    if (!isNew) s.id = editingId;
+
+    await saveShipment(s, isNew);
+    await loadFromSupabase();
+
+    closeModal();
+    notify('Chargement enregistré avec succès.');
+  } catch (error) {
+    notify('Erreur d’enregistrement : ' + error.message);
+  } finally {
+    button.disabled = false;
+    button.textContent = 'Enregistrer';
+  }
+});async function deleteShipment(id){if(currentRole!=='admin'){notify('Accès en lecture seule.');return}const s=shipments.find(x=>x.id===id);if(!s)return;if(!confirm(`Supprimer le chargement ${s.ref||''} ? Cette action est définitive.`))return;const {error}=await db.from('shipments').delete().eq('id',id);if(error){notify('Erreur Supabase : '+error.message);return}shipments=shipments.filter(x=>x.id!==id);render();closeModal();notify('Chargement supprimé.')}
 $('shipmentRows').addEventListener('click',e=>{if(currentRole!=='admin')return;const b=e.target.closest('button[data-action]');if(!b)return;if(b.dataset.action==='edit')openModal(b.dataset.id);if(b.dataset.action==='delete')deleteShipment(b.dataset.id)});
 $('newShipment').addEventListener('click',()=>openModal());$('emptyAdd').addEventListener('click',()=>openModal());$('closeModal').addEventListener('click',closeModal);$('cancelModal').addEventListener('click',closeModal);$('modalOverlay').addEventListener('click',e=>{if(e.target===$('modalOverlay'))closeModal()});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('modalOverlay').classList.contains('open'))closeModal()});$('deleteShipment').addEventListener('click',()=>{if(editingId)deleteShipment(editingId)});
 ['search','statusFilter','modeFilter','sortFilter'].forEach(id=>$(id).addEventListener(id==='search'?'input':'change',render));$('resetFilters').addEventListener('click',()=>{$('search').value='';$('statusFilter').value='';$('modeFilter').value='';$('sortFilter').value='eta';render()});
