@@ -236,6 +236,16 @@ async function loadFromSupabase(){
  render();
  return true;
 }
+  async function saveShipmentContacts(shipmentId,s){
+ const row={
+  shipment_id:shipmentId,
+  transporter_phone:s.transporterPhone||null,
+  transit_company:s.transitCompany||null,
+  transit_phone:s.transitPhone||null
+ };
+ const {error}=await db.from('shipment_contacts').upsert(row,{onConflict:'shipment_id'});
+ if(error) throw error;
+}
 async function saveShipment(s,isNew){
  const row={articles:s.articles||[],reference:s.ref,supplier:s.supplier,country:s.country,mode:s.mode,incoterm:s.incoterm,goods:s.goods,article_names:s.articleNames||'',article_reference:s.articleReference||'',quantity:s.quantity===''?null:s.quantity,unit:s.unit,container:s.container,bl:s.bl,invoice:s.invoice,origin_port:s.originPort,dest_port:s.destPort,transporter:s.transporter,order_date:s.orderDate||null,load_date:s.loadDate||null,etd:s.etd||null,eta:s.eta||null,actual_arrival:s.actualArrival||null,status:s.status,surestaries_start_date:s.surestariesStartDate||null,terminal_out_date:s.terminalOutDate||null,free_days:s.freeDays===''?null:s.freeDays,daily_rate:s.dailyRate===''?null:s.dailyRate,container_count:s.containerCount||1,currency:s.currency||'MAD',notes:s.notes||'',updated_at:new Date().toISOString()};
  if(isNew){row.user_id=currentUser.id;const {data,error}=await db.from('shipments').insert(row).select('*').single();if(error)throw error;return {...data,articleNames:data.article_names??'',articleReference:data.article_reference??'',originPort:data.origin_port??'',destPort:data.dest_port??'',orderDate:data.order_date??'',loadDate:data.load_date??'',actualArrival:data.actual_arrival??'',surestariesStartDate:data.surestaries_start_date??'',terminalOutDate:data.terminal_out_date??'',freeDays:data.free_days??'',dailyRate:data.daily_rate??'',containerCount:data.container_count??1,updatedAt:data.updated_at??data.created_at};}
