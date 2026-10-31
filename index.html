@@ -96,8 +96,32 @@ body.consultant .table-wrap table{min-width:680px}
         <div class="form-field"><label for="fIncoterm">Incoterm</label><select id="fIncoterm" name="incoterm"><option value="">Non précisé</option><option>EXW</option><option>FCA</option><option>FOB</option><option>CFR</option><option>CIF</option><option>CPT</option><option>CIP</option><option>DAP</option><option>DPU</option><option>DDP</option></select></div>
         <div class="form-field span2"><label for="fGoods">Marchandise / catégorie</label><input id="fGoods" name="goods" placeholder="Ex. Carrelage" maxlength="180" /></div>
         <div class="form-field"><label for="fQuantity">Quantité totale</label><div style="display:flex;gap:6px"><input id="fQuantity" name="quantity" type="number" min="0" step="0.01" placeholder="0" style="flex:1;width:40%"/><select id="fUnit" name="unit" style="width:95px"><option>m²</option><option>palettes</option><option>cartons</option><option>unités</option><option>tonnes</option></select></div></div>
-        <div class="form-field"><label for="fArticleReference">Référence article</label><input id="fArticleReference" name="articleReference" placeholder="Ex. CAR-6060-GRIS" maxlength="120" /></div>
-        <div class="form-field full"><label for="fArticleNames">Noms des articles</label><textarea id="fArticleNames" name="articleNames" placeholder="Ex. : Carrelage 60×60 gris mat — 1 200 m²&#10;Carrelage 60×120 beige brillant — 800 m²&#10;Colle à carrelage — 50 sacs" maxlength="2500"></textarea><span class="hint">Vous pouvez saisir plusieurs articles, idéalement un article par ligne.</span></div>
+       <div class="form-field full">
+  <label>Liste détaillée des articles</label>
+
+  <div class="table-wrap">
+    <table class="articles-table">
+      <thead>
+        <tr>
+          <th>Référence</th>
+          <th>Désignation de l'article</th>
+          <th>Quantité</th>
+          <th>Unité</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="articleRows"></tbody>
+    </table>
+  </div>
+
+  <button type="button" id="addArticleBtn">
+    + Ajouter un article
+  </button>
+
+  <div id="articleTotals" class="article-totals">
+    Totaux par unité
+  </div>
+</div>
       </div>
       <div class="section-title">Transport et documents</div>
       <div class="formgrid">
