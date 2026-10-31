@@ -26,14 +26,16 @@ tr:hover{background:#f1f5fa}
 <table>
 <thead>
 <tr>
-<th>Fournisseur</th>
-<th>Conteneur</th>
-<th>BL</th>
-<th>Articles</th>
-<th>Quantité</th>
-<th>Unité</th>
-<th>Arrivée prévue</th>
-<th>Statut</th>
+  <th>Fournisseur</th>
+  <th>Conteneur</th>
+  <th>BL</th>
+  <th>Référence article</th>
+  <th>Désignation</th>
+  <th>Quantité</th>
+  <th>Unité</th>
+  <th>Arrivée prévue</th>
+  <th>Statut</th>
+</tr>
 </tr>
 </thead>
 <tbody id="dossiers"></tbody>
@@ -74,18 +76,48 @@ async function chargerDossiers() {
     return;
   }
 
-  tbody.innerHTML = data.map(s => `
+ tbody.innerHTML = data.map(s => {
+  const articles = Array.isArray(s.articles) && s.articles.length
+    ? s.articles
+    : (s.article_names ? [{
+        reference: '',
+        name: s.article_names,
+        quantity: s.quantity,
+        unit: s.unit
+      }] : []);
+
+  const totals = {};
+  articles.forEach(a => {
+    const unit = a.unit || 'Autre';
+    totals[unit] = (totals[unit] || 0) + (Number(a.quantity) || 0);
+  });
+
+  const lignes = articles.map(a => `
     <tr>
       <td>${safe(s.supplier)}</td>
       <td>${safe(s.container)}</td>
       <td>${safe(s.bl)}</td>
-      <td>${safe(s.article_names)}</td>
-      <td>${safe(s.quantity)}</td>
-      <td>${safe(s.unit)}</td>
+      <td>${safe(a.reference)}</td>
+      <td>${safe(a.name)}</td>
+      <td>${safe(a.quantity)}</td>
+      <td>${safe(a.unit)}</td>
       <td>${safe(s.eta)}</td>
       <td>${safe(s.status)}</td>
     </tr>
   `).join('');
+
+  const totalTexte = Object.entries(totals)
+    .map(([unit, total]) => total.toLocaleString('fr-FR') + ' ' + unit)
+    .join(' · ');
+
+  return lignes + (articles.length ? `
+    <tr>
+      <td colspan="5"><strong>Totaux du dossier</strong></td>
+      <td colspan="2"><strong>${safe(totalTexte)}</strong></td>
+      <td colspan="2"></td>
+    </tr>
+  ` : '');
+}).join('');
 
   message.textContent = data.length + ' dossier(s) disponible(s).';
 }
