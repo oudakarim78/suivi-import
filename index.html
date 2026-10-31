@@ -155,7 +155,7 @@ function loadData(){return []}
 async function loadFromSupabase(){
  const {data,error}=await db.from('shipments').select('*').order('created_at',{ascending:false});
  if(error){console.error(error);notify('Erreur Supabase : '+error.message);return false}
- shipments=(data||[]).map(s=>({...s,articleNames:s.article_names??'',articleReference:s.article_reference??'',originPort:s.origin_port??'',destPort:s.dest_port??'',orderDate:s.order_date??'',loadDate:s.load_date??'',actualArrival:s.actual_arrival??'',surestariesStartDate:s.surestaries_start_date??'',terminalOutDate:s.terminal_out_date??'',freeDays:s.free_days??'',dailyRate:s.daily_rate??'',containerCount:s.container_count??1,updatedAt:s.updated_at??s.created_at}));
+ shipments=(data||[]).map(s=>({...s,ref:s.reference??s.ref,articleNames:s.article_names??'',articleReference:s.article_reference??'',originPort:s.origin_port??'',destPort:s.dest_port??'',orderDate:s.order_date??'',loadDate:s.load_date??'',actualArrival:s.actual_arrival??'',surestariesStartDate:s.surestaries_start_date??'',terminalOutDate:s.terminal_out_date??'',freeDays:s.free_days??'',dailyRate:s.daily_rate??'',containerCount:s.container_count??1,updatedAt:s.updated_at??s.created_at}));
  $('lastUpdated').textContent='Données Supabase : '+new Date().toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'});render();return true
 }
 async function saveShipment(s,isNew){
