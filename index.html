@@ -130,8 +130,22 @@ body.consultant .table-wrap table{min-width:680px}
         <div class="form-field"><label for="fInvoice">N° facture</label><input id="fInvoice" name="invoice" placeholder="Référence facture" maxlength="100" /></div>
         <div class="form-field"><label for="fOriginPort">Départ</label><input id="fOriginPort" name="originPort" placeholder="Ex. Valence" maxlength="100" /></div>
         <div class="form-field"><label for="fDestPort">Port / destination</label><input id="fDestPort" name="destPort" placeholder="Ex. Tanger Med" maxlength="100" /></div>
-        <div class="form-field"><label for="fTransporter">Transitaire / transporteur</label><input id="fTransporter" name="transporter" placeholder="Nom / contact" maxlength="120" /></div>
-      </div>
+<div class="form-field">
+  <label for="fTransporter">Nom du transporteur</label>
+  <input id="fTransporter" name="transporter" placeholder="Société de transport" maxlength="120" />
+</div>
+<div class="form-field">
+  <label for="fTransporterPhone">Téléphone du transporteur</label>
+  <input id="fTransporterPhone" name="transporterPhone" type="tel" placeholder="+212..." maxlength="30" />
+</div>
+<div class="form-field">
+  <label for="fTransitCompany">Nom de la société de transit</label>
+  <input id="fTransitCompany" name="transitCompany" placeholder="Société de transit" maxlength="120" />
+</div>
+<div class="form-field">
+  <label for="fTransitPhone">Téléphone du transitaire</label>
+  <input id="fTransitPhone" name="transitPhone" type="tel" placeholder="+212..." maxlength="30" />
+</div>      </div>
       <div class="section-title">Dates et avancement</div>
       <div class="formgrid">
         <div class="form-field"><label for="fOrderDate">Date de commande</label><input id="fOrderDate" name="orderDate" type="date" /></div>
