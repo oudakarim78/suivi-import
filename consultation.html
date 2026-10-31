@@ -1,0 +1,96 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Consultation des importations</title>
+<style>
+body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f9;color:#263445}
+h2{color:#17365d}
+.container{max-width:1200px;margin:auto}
+.table-wrap{overflow-x:auto;background:white;border-radius:10px;padding:12px}
+table{width:100%;border-collapse:collapse;min-width:850px}
+th,td{padding:12px;border-bottom:1px solid #ddd;text-align:left}
+th{background:#17365d;color:white}
+tr:hover{background:#f1f5fa}
+#message{padding:12px;margin:12px 0}
+</style>
+</head>
+<body>
+<div class="container">
+<h2>Suivi des importations</h2>
+<p>Page de consultation — accès en lecture seule</p>
+<div id="message">Chargement des dossiers...</div>
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>Fournisseur</th>
+<th>Conteneur</th>
+<th>BL</th>
+<th>Articles</th>
+<th>Quantité</th>
+<th>Unité</th>
+<th>Arrivée prévue</th>
+<th>Statut</th>
+</tr>
+</thead>
+<tbody id="dossiers"></tbody>
+</table>
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const URL = 'https://mnyokiniupvtzesdmwit.supabase.co';
+const KEY = 'sb_publishable_-HIf7IptcZ1as_TXkn5SCQ_Fx6lPnbi';
+
+const db = window.supabase.createClient(URL, KEY);
+
+function safe(value) {
+  return String(value ?? '—').replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;',
+    '"':'&quot;',"'":'&#39;'
+  })[c]);
+}
+
+async function chargerDossiers() {
+  const message = document.getElementById('message');
+  const tbody = document.getElementById('dossiers');
+
+  const { data, error } = await db
+    .from('shipments_public')
+    .select('supplier,container,bl,article_names,quantity,unit,eta,status')
+    .order('eta', { ascending: true });
+
+  if (error) {
+    message.textContent = 'Erreur de chargement : ' + error.message;
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    message.textContent = 'Aucun dossier disponible.';
+    return;
+  }
+
+  tbody.innerHTML = data.map(s => `
+    <tr>
+      <td>${safe(s.supplier)}</td>
+      <td>${safe(s.container)}</td>
+      <td>${safe(s.bl)}</td>
+      <td>${safe(s.article_names)}</td>
+      <td>${safe(s.quantity)}</td>
+      <td>${safe(s.unit)}</td>
+      <td>${safe(s.eta)}</td>
+      <td>${safe(s.status)}</td>
+    </tr>
+  `).join('');
+
+  message.textContent = data.length + ' dossier(s) disponible(s).';
+}
+
+chargerDossiers();
+</script>
+</body>
+</html>
