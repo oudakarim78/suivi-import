@@ -63,7 +63,7 @@ async function chargerDossiers() {
 
   const { data, error } = await db
     .from('shipments_public')
-    .select('supplier,container,bl,article_names,quantity,unit,eta,status')
+    .select('supplier,container,bl,article_names,quantity,unit,eta,status,articles')
     .order('eta', { ascending: true });
 
   if (error) {
