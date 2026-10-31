@@ -46,6 +46,100 @@ tr:hover{background:#f1f5fa}
   color: white;
   cursor: pointer;
 }
+  /* Cartes des dossiers */
+#dossiers {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.dossier-card {
+  background: white;
+  border: 1px solid #dce3ec;
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: 0 2px 7px rgba(0,0,0,0.06);
+}
+
+.dossier-card h3 {
+  color: #17365d;
+  margin: 0 0 12px;
+}
+
+.dossier-infos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 24px;
+  margin-bottom: 14px;
+}
+
+.statut-dossier {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 20px;
+  background: #e8eef7;
+  color: #17365d;
+  font-weight: bold;
+}
+
+.btn-articles {
+  background: #17365d;
+  color: white;
+  border: 0;
+  border-radius: 7px;
+  padding: 10px 16px;
+  cursor: pointer;
+}
+
+.modal-articles {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  padding: 15px;
+}
+
+.modal-contenu {
+  background: white;
+  width: 100%;
+  max-width: 750px;
+  max-height: 85vh;
+  overflow-y: auto;
+  border-radius: 12px;
+  padding: 22px;
+}
+
+.modal-contenu table {
+  width: 100%;
+  min-width: 0;
+  border-collapse: collapse;
+}
+
+.modal-contenu th,
+.modal-contenu td {
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+.btn-fermer {
+  float: right;
+  border: 0;
+  background: #17365d;
+  color: white;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+@media (max-width: 600px) {
+  .dossier-infos {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
 </style>
 </head>
 <body>
@@ -75,28 +169,14 @@ tr:hover{background:#f1f5fa}
 </select>
 
   <button type="button" id="reinitialiser">Réinitialiser</button>
+<div id="dossiers"></div>
+    <div id="modalArticles" class="modal-articles">
+  <div class="modal-contenu">
+    <button type="button" class="btn-fermer" onclick="fermerArticles()">Fermer ✕</button>
+    <h2 id="titreModal">Articles du dossier</h2>
+    <div id="contenuArticles"></div>
+  </div>
 </div>
-<div class="table-wrap">
-<table>
-<thead>
-<tr>
-  <th>Fournisseur</th>
-  <th>Conteneur</th>
-  <th>BL</th>
-  <th>Référence article</th>
-  <th>Désignation</th>
-  <th>Quantité</th>
-  <th>Unité</th>
-  <th>Arrivée prévue</th>
-  <th>Statut</th>
-</tr>
-</tr>
-</thead>
-<tbody id="dossiers"></tbody>
-</table>
-</div>
-</div>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL = 'https://mnyokiniupvtzesdmwit.supabase.co';
@@ -111,26 +191,180 @@ function safe(value) {
   })[c]);
 }
 let tousLesDossiers = [];
-  function appliquerFiltres() {
-  const recherche = document.getElementById('recherche').value.toLowerCase().trim();
-  const statut = document.getElementById('filtreStatut').value.toLowerCase();
 
-  const lignes = document.querySelectorAll('#dossiers tr');
-
-  lignes.forEach(ligne => {
-    const texte = ligne.textContent.toLowerCase();
-    const celluleStatut = ligne.cells[8];
-    const statutLigne = celluleStatut ? celluleStatut.textContent.toLowerCase().trim() : '';
-
-    const correspondRecherche = texte.includes(recherche);
-    const correspondStatut = !statut || statutLigne === statut;
-
-    ligne.style.display = correspondRecherche && correspondStatut ? '' : 'none';
-  });
+function normaliser(valeur) {
+  return String(valeur ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase();
 }
+
+function obtenirArticles(s) {
+  if (Array.isArray(s.articles) && s.articles.length) {
+    return s.articles;
+  }
+
+  if (s.article_names) {
+    return [{
+      reference: '',
+      name: s.article_names,
+      quantity: s.quantity,
+      unit: s.unit
+    }];
+  }
+
+  return [];
+}
+
+function calculerTotaux(articles) {
+  const totaux = {};
+
+  articles.forEach(a => {
+    const unite = a.unit || 'Autre';
+    totaux[unite] = (totaux[unite] || 0) +
+      (Number(a.quantity) || 0);
+  });
+
+  return Object.entries(totaux)
+    .map(([unite, total]) =>
+      total.toLocaleString('fr-FR') + ' ' + unite
+    )
+    .join(' · ');
+}
+
+function ouvrirArticles(index) {
+  const dossier = tousLesDossiers[index];
+  if (!dossier) return;
+
+  const articles = obtenirArticles(dossier);
+
+  document.getElementById('titreModal').textContent =
+    'Articles du dossier — ' + (dossier.supplier || 'Sans fournisseur');
+
+  const lignes = articles.map(a => `
+    <tr>
+      <td>${safe(a.reference)}</td>
+      <td>${safe(a.name)}</td>
+      <td>${safe(a.quantity)}</td>
+      <td>${safe(a.unit)}</td>
+    </tr>
+  `).join('');
+
+  document.getElementById('contenuArticles').innerHTML = `
+    <p><strong>Fournisseur :</strong> ${safe(dossier.supplier)}</p>
+    <p><strong>Conteneur :</strong> ${safe(dossier.container)}</p>
+    <p><strong>BL :</strong> ${safe(dossier.bl)}</p>
+    <p><strong>Arrivée prévue :</strong> ${safe(dossier.eta)}</p>
+    <p><strong>Statut :</strong> ${safe(dossier.status)}</p>
+
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>Référence</th>
+            <th>Désignation</th>
+            <th>Quantité</th>
+            <th>Unité</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${lignes || '<tr><td colspan="4">Aucun article enregistré.</td></tr>'}
+        </tbody>
+      </table>
+    </div>
+
+    <p class="total-dossier">
+      Total : ${safe(calculerTotaux(articles) || 'Aucun article')}
+    </p>
+  `;
+
+  document.getElementById('modalArticles').style.display = 'flex';
+}
+
+function fermerArticles() {
+  document.getElementById('modalArticles').style.display = 'none';
+}
+
+function appliquerFiltres() {
+  const recherche = normaliser(
+    document.getElementById('recherche').value
+  );
+
+  const statut = normaliser(
+    document.getElementById('filtreStatut').value
+  );
+
+  const dossiersFiltres = tousLesDossiers
+    .map((dossier, index) => ({ dossier, index }))
+    .filter(({ dossier }) => {
+      const articles = obtenirArticles(dossier);
+
+      const texte = normaliser([
+        dossier.supplier,
+        dossier.container,
+        dossier.bl,
+        dossier.eta,
+        dossier.status,
+        ...articles.map(a =>
+          [a.reference, a.name, a.quantity, a.unit].join(' ')
+        )
+      ].join(' '));
+
+      const correspondRecherche = texte.includes(recherche);
+      const correspondStatut =
+        !statut || normaliser(dossier.status) === statut;
+
+      return correspondRecherche && correspondStatut;
+    });
+
+  afficherDossiers(dossiersFiltres);
+}
+
+function afficherDossiers(liste) {
+  const zone = document.getElementById('dossiers');
+
+  if (!liste.length) {
+    zone.innerHTML = '<p>Aucun dossier ne correspond à votre recherche.</p>';
+    return;
+  }
+
+  zone.innerHTML = liste.map(({ dossier: s, index }) => {
+    const articles = obtenirArticles(s);
+    const total = calculerTotaux(articles);
+
+    return `
+      <div class="dossier-card">
+        <h3>Dossier ${index + 1} — ${safe(s.supplier)}</h3>
+
+        <div class="dossier-infos">
+          <span><strong>Conteneur :</strong> ${safe(s.container)}</span>
+          <span><strong>BL :</strong> ${safe(s.bl)}</span>
+          <span><strong>Arrivée prévue :</strong> ${safe(s.eta)}</span>
+          <span class="statut-dossier">${safe(s.status)}</span>
+        </div>
+
+        <p>
+          <strong>${articles.length}</strong>
+          article(s) enregistré(s)
+          ${total ? ' · ' + safe(total) : ''}
+        </p>
+
+        <button
+          type="button"
+          class="btn-articles"
+          onclick="ouvrirArticles(${index})">
+          Voir les articles
+        </button>
+      </div>
+    `;
+  }).join('');
+}
+
 async function chargerDossiers() {
   const message = document.getElementById('message');
-  const tbody = document.getElementById('dossiers');
+
+  message.textContent = 'Chargement des dossiers...';
 
   const { data, error } = await db
     .from('shipments_public')
@@ -141,56 +375,19 @@ async function chargerDossiers() {
     message.textContent = 'Erreur de chargement : ' + error.message;
     return;
   }
-tousLesDossiers = data || [];
-  if (!data || data.length === 0) {
+
+  tousLesDossiers = data || [];
+
+  if (!tousLesDossiers.length) {
     message.textContent = 'Aucun dossier disponible.';
+    document.getElementById('dossiers').innerHTML = '';
     return;
   }
 
- tbody.innerHTML = data.map(s => {
-  const articles = Array.isArray(s.articles) && s.articles.length
-    ? s.articles
-    : (s.article_names ? [{
-        reference: '',
-        name: s.article_names,
-        quantity: s.quantity,
-        unit: s.unit
-      }] : []);
+  message.textContent =
+    tousLesDossiers.length + ' dossier(s) disponible(s).';
 
-  const totals = {};
-  articles.forEach(a => {
-    const unit = a.unit || 'Autre';
-    totals[unit] = (totals[unit] || 0) + (Number(a.quantity) || 0);
-  });
-
-  const lignes = articles.map(a => `
-    <tr>
-      <td>${safe(s.supplier)}</td>
-      <td>${safe(s.container)}</td>
-      <td>${safe(s.bl)}</td>
-      <td>${safe(a.reference)}</td>
-      <td>${safe(a.name)}</td>
-      <td>${safe(a.quantity)}</td>
-      <td>${safe(a.unit)}</td>
-      <td>${safe(s.eta)}</td>
-      <td>${safe(s.status)}</td>
-    </tr>
-  `).join('');
-
-  const totalTexte = Object.entries(totals)
-    .map(([unit, total]) => total.toLocaleString('fr-FR') + ' ' + unit)
-    .join(' · ');
-
-  return lignes + (articles.length ? `
-    <tr>
-      <td colspan="5"><strong>Totaux du dossier</strong></td>
-      <td colspan="2"><strong>${safe(totalTexte)}</strong></td>
-      <td colspan="2"></td>
-    </tr>
-  ` : '');
-}).join('');
-
-  message.textContent = data.length + ' dossier(s) disponible(s).';
+  appliquerFiltres();
 }
 document.getElementById('recherche').addEventListener('input', appliquerFiltres);
 
