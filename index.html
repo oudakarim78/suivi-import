@@ -179,11 +179,11 @@ function loadData(){return []}
 async function loadFromSupabase(){
  const {data,error}=await db.from('shipments').select('*').order('created_at',{ascending:false});
  if(error){console.error(error);notify('Erreur Supabase : '+error.message);return false}
- shipments=(data||[]).map(s=>({...s,ref:s.reference??s.ref,articleNames:s.article_names??'',articleReference:s.article_reference??'',originPort:s.origin_port??'',destPort:s.dest_port??'',orderDate:s.order_date??'',loadDate:s.load_date??'',actualArrival:s.actual_arrival??'',surestariesStartDate:s.surestaries_start_date??'',terminalOutDate:s.terminal_out_date??'',freeDays:s.free_days??'',dailyRate:s.daily_rate??'',containerCount:s.container_count??1,updatedAt:s.updated_at??s.created_at}));
+ shipments=(data||[]).map(s=>({articles:s.articles||[],...s,ref:s.reference??s.ref,articleNames:s.article_names??'',articleReference:s.article_reference??'',originPort:s.origin_port??'',destPort:s.dest_port??'',orderDate:s.order_date??'',loadDate:s.load_date??'',actualArrival:s.actual_arrival??'',surestariesStartDate:s.surestaries_start_date??'',terminalOutDate:s.terminal_out_date??'',freeDays:s.free_days??'',dailyRate:s.daily_rate??'',containerCount:s.container_count??1,updatedAt:s.updated_at??s.created_at}));
  $('lastUpdated').textContent='Données Supabase : '+new Date().toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'});render();return true
 }
 async function saveShipment(s,isNew){
- const row={reference:s.ref,supplier:s.supplier,country:s.country,mode:s.mode,incoterm:s.incoterm,goods:s.goods,article_names:s.articleNames||'',article_reference:s.articleReference||'',quantity:s.quantity===''?null:s.quantity,unit:s.unit,container:s.container,bl:s.bl,invoice:s.invoice,origin_port:s.originPort,dest_port:s.destPort,transporter:s.transporter,order_date:s.orderDate||null,load_date:s.loadDate||null,etd:s.etd||null,eta:s.eta||null,actual_arrival:s.actualArrival||null,status:s.status,surestaries_start_date:s.surestariesStartDate||null,terminal_out_date:s.terminalOutDate||null,free_days:s.freeDays===''?null:s.freeDays,daily_rate:s.dailyRate===''?null:s.dailyRate,container_count:s.containerCount||1,currency:s.currency||'MAD',notes:s.notes||'',updated_at:new Date().toISOString()};
+ const row={articles:s.articles||[],reference:s.ref,,supplier:s.supplier,country:s.country,mode:s.mode,incoterm:s.incoterm,goods:s.goods,article_names:s.articleNames||'',article_reference:s.articleReference||'',quantity:s.quantity===''?null:s.quantity,unit:s.unit,container:s.container,bl:s.bl,invoice:s.invoice,origin_port:s.originPort,dest_port:s.destPort,transporter:s.transporter,order_date:s.orderDate||null,load_date:s.loadDate||null,etd:s.etd||null,eta:s.eta||null,actual_arrival:s.actualArrival||null,status:s.status,surestaries_start_date:s.surestariesStartDate||null,terminal_out_date:s.terminalOutDate||null,free_days:s.freeDays===''?null:s.freeDays,daily_rate:s.dailyRate===''?null:s.dailyRate,container_count:s.containerCount||1,currency:s.currency||'MAD',notes:s.notes||'',updated_at:new Date().toISOString()};
  if(isNew){row.user_id=currentUser.id;const {data,error}=await db.from('shipments').insert(row).select('*').single();if(error)throw error;return {...data,articleNames:data.article_names??'',articleReference:data.article_reference??'',originPort:data.origin_port??'',destPort:data.dest_port??'',orderDate:data.order_date??'',loadDate:data.load_date??'',actualArrival:data.actual_arrival??'',surestariesStartDate:data.surestaries_start_date??'',terminalOutDate:data.terminal_out_date??'',freeDays:data.free_days??'',dailyRate:data.daily_rate??'',containerCount:data.container_count??1,updatedAt:data.updated_at??data.created_at};}
  const {data,error}=await db.from('shipments').update(row).eq('id',s.id).select('*').single();if(error)throw error;return {...data,articleNames:data.article_names??'',articleReference:data.article_reference??'',originPort:data.origin_port??'',destPort:data.dest_port??'',orderDate:data.order_date??'',loadDate:data.load_date??'',actualArrival:data.actual_arrival??'',surestariesStartDate:data.surestaries_start_date??'',terminalOutDate:data.terminal_out_date??'',freeDays:data.free_days??'',dailyRate:data.daily_rate??'',containerCount:data.container_count??1,updatedAt:data.updated_at??data.created_at};
 }
@@ -233,9 +233,72 @@ function render(){
 }
 function renderAlerts(){const alerts=[];const today=todayISO();shipments.forEach(s=>{const label=`${s.ref||'Sans référence'} — ${s.supplier||'Fournisseur non précisé'}`;if(daysLate(s)){const delay=dayDifference(s.eta,today);alerts.push({level:'danger',title:'Retard d’arrivée',text:`${label} : arrivée prévue le ${fmtDate(s.eta)}, dépassée de ${delay} jour(s).`})}const c=calcSurestaries(s);if(c.hasStart&&!c.hasFree){alerts.push({level:'warning',title:'Franchise à renseigner',text:`${label} : indiquez le nombre de jours gratuits prévu par le transporteur pour activer le calcul.`});return}if(!c.configured)return;if(c.ongoing&&c.chargeableDays>0){const amount=c.hasRate?` Coût estimé à ce jour : ${fmtMoney(c.amount,c.currency)}.`:' Renseignez le tarif journalier pour calculer le montant.';alerts.push({level:'danger',title:'Surestaries en cours',text:`${label} : ${c.chargeableDays} jour(s) facturable(s) pour ${c.count} conteneur(s).${amount}`})}else if(c.ongoing&&c.chargeableDays===0&&c.freeDays>0&&c.totalDays>=Math.max(1,c.freeDays-1)){const left=Math.max(0,c.freeDays-c.totalDays);alerts.push({level:'warning',title:left===0?'Franchise échue aujourd’hui':'Franchise bientôt échue',text:`${label} : ${left===0?'le dernier jour gratuit est atteint.':'il reste environ '+left+' jour(s) de franchise.'} Vérifiez la date de sortie du terminal.`})}});const panel=$('alertPanel'),list=$('alertList');if(!alerts.length){panel.hidden=true;list.innerHTML='';return}panel.hidden=false;$('alertSummary').textContent=`${alerts.length} alerte(s) nécessitent votre attention.`;list.innerHTML=alerts.map(a=>`<article class="alert-item ${a.level}"><strong>${escapeHtml(a.title)}</strong><p>${escapeHtml(a.text)}</p></article>`).join('')}
 function updateSurestariesPreview(){const c=calcSurestaries({surestariesStartDate:$('fSurestariesStartDate').value,terminalOutDate:$('fTerminalOutDate').value,freeDays:$('fFreeDays').value,dailyRate:$('fDailyRate').value,containerCount:$('fContainerCount').value,currency:$('fCurrency').value});$('previewChargeDays').textContent=c.hasStart&&c.hasFree?`${c.chargeableDays} jour(s)`:'À renseigner';$('previewChargeAmount').textContent=c.amount==null?'À calculer':fmtMoney(c.amount,c.currency);$('previewUntil').textContent=c.hasStart?fmtDate(c.end):'—'}
-function openModal(id){if(currentRole!=='admin')return;editingId=id||null;const form=$('shipmentForm');form.reset();const s=id?shipments.find(x=>x.id===id):null;$('modalTitle').textContent=s?'Modifier le chargement':'Nouveau chargement';$('deleteShipment').style.display=s?'inline-flex':'none';
- const vals={fRef:s?.ref||makeRef(),fSupplier:s?.supplier||'',fCountry:s?.country||'',fMode:s?.mode||'Maritime',fIncoterm:s?.incoterm||'',fGoods:s?.goods||'',fArticleReference:s?.articleReference||'',fArticleNames:s?.articleNames||'',fQuantity:s?.quantity??'',fUnit:s?.unit||'m²',fContainer:s?.container||'',fBl:s?.bl||'',fInvoice:s?.invoice||'',fOriginPort:s?.originPort||'',fDestPort:s?.destPort||'',fTransporter:s?.transporter||'',fOrderDate:s?.orderDate||todayISO(),fLoadDate:s?.loadDate||'',fEtd:s?.etd||'',fEta:s?.eta||'',fActualArrival:s?.actualArrival||'',fStatus:s?.status||'Commandée',fSurestariesStartDate:s?.surestariesStartDate||'',fTerminalOutDate:s?.terminalOutDate||'',fFreeDays:s?.freeDays??'',fDailyRate:s?.dailyRate??'',fContainerCount:s?.containerCount??1,fCurrency:s?.currency||'MAD',fNotes:s?.notes||''};
- Object.entries(vals).forEach(([id,v])=>$(id).value=v);$('modalOverlay').classList.add('open');document.body.style.overflow='hidden';updateSurestariesPreview();setTimeout(()=>$('fSupplier').focus(),40)}
+function openModal(id) {
+  if (currentRole !== 'admin') return;
+
+  editingId = id || null;
+  const form = $('shipmentForm');
+  form.reset();
+
+  const s = id ? shipments.find(x => x.id === id) : null;
+
+  $('modalTitle').textContent = s ? 'Modifier le chargement' : 'Nouveau chargement';
+  $('deleteShipment').style.display = s ? 'inline-flex' : 'none';
+
+  const vals = {
+    fRef: s?.ref || makeRef(),
+    fSupplier: s?.supplier || '',
+    fCountry: s?.country || '',
+    fMode: s?.mode || 'Maritime',
+    fIncoterm: s?.incoterm || '',
+    fGoods: s?.goods || '',
+    fContainer: s?.container || '',
+    fBl: s?.bl || '',
+    fInvoice: s?.invoice || '',
+    fOriginPort: s?.originPort || '',
+    fDestPort: s?.destPort || '',
+    fTransporter: s?.transporter || '',
+    fOrderDate: s?.orderDate || todayISO(),
+    fLoadDate: s?.loadDate || '',
+    fEtd: s?.etd || '',
+    fEta: s?.eta || '',
+    fActualArrival: s?.actualArrival || '',
+    fStatus: s?.status || 'Commandée',
+    fSurestariesStartDate: s?.surestariesStartDate || '',
+    fTerminalOutDate: s?.terminalOutDate || '',
+    fFreeDays: s?.freeDays ?? '',
+    fDailyRate: s?.dailyRate ?? '',
+    fContainerCount: s?.containerCount ?? 1,
+    fCurrency: s?.currency || 'MAD',
+    fNotes: s?.notes || ''
+  };
+
+  Object.entries(vals).forEach(([id, value]) => {
+    $(id).value = value;
+  });
+
+  $('articleRows').innerHTML = '';
+
+  const articles = s?.articles?.length
+    ? s.articles
+    : (s ? [{
+        reference: s.articleReference || '',
+        name: s.articleNames || '',
+        quantity: s.quantity || '',
+        unit: s.unit || 'm²'
+      }] : []);
+
+  if (articles.length) {
+    articles.forEach(article => addArticleRow(article));
+  } else {
+    addArticleRow();
+  }
+
+  $('modalOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  updateSurestariesPreview();
+  setTimeout(() => $('fSupplier').focus(), 40);
+}
 function closeModal(){ $('modalOverlay').classList.remove('open');document.body.style.overflow='';editingId=null }
 const ARTICLE_UNITS = ['m²', 'm³', 'cartons', 'palettes', 'pièces', 'sacs', 'kg', 'tonnes'];
 
@@ -290,8 +353,56 @@ function updateArticleTotals() {
 }
 
 $('addArticleBtn').addEventListener('click', () => addArticleRow());function makeRef(){const y=new Date().getFullYear();let n=shipments.length+1;let ref;do{ref=`IMP-${y}-${String(n).padStart(3,'0')}`;n++}while(shipments.some(s=>s.ref===ref));return ref}
-function fieldData(){const names={ref:'fRef',supplier:'fSupplier',country:'fCountry',mode:'fMode',incoterm:'fIncoterm',goods:'fGoods',articleReference:'fArticleReference',articleNames:'fArticleNames',quantity:'fQuantity',unit:'fUnit',container:'fContainer',bl:'fBl',invoice:'fInvoice',originPort:'fOriginPort',destPort:'fDestPort',transporter:'fTransporter',orderDate:'fOrderDate',loadDate:'fLoadDate',etd:'fEtd',eta:'fEta',actualArrival:'fActualArrival',status:'fStatus',surestariesStartDate:'fSurestariesStartDate',terminalOutDate:'fTerminalOutDate',freeDays:'fFreeDays',dailyRate:'fDailyRate',containerCount:'fContainerCount',currency:'fCurrency',notes:'fNotes'};const out={};for(const[k,id]of Object.entries(names))out[k]=$(id).value.trim();out.quantity=out.quantity===''?'':Number(out.quantity);out.freeDays=out.freeDays===''?'':Number(out.freeDays);out.dailyRate=out.dailyRate===''?'':Number(out.dailyRate);out.containerCount=out.containerCount===''?1:Number(out.containerCount);return out}
-$('shipmentForm').addEventListener('submit',async e=>{e.preventDefault();if(currentRole!=='admin'){notify('Accès en lecture seule.');return}const wasEditing=Boolean(editingId);const f=fieldData();const dupe=shipments.some(s=>String(s.ref||'').toLocaleLowerCase()===f.ref.toLocaleLowerCase()&&s.id!==editingId);if(dupe){notify('Cette référence existe déjà. Choisissez une autre référence.');$('fRef').focus();return}try{const saved=await saveShipment({...f,id:editingId},!editingId);if(editingId){const i=shipments.findIndex(s=>s.id===editingId);if(i>=0)shipments[i]=saved}else shipments.unshift(saved);render();closeModal();notify(wasEditing?'Chargement mis à jour.':'Chargement ajouté.')}catch(err){console.error(err);notify('Enregistrement refusé : '+(err.message||'vérifiez les droits Supabase'));}});
+function fieldData() {
+  const names = {
+    ref:'fRef',
+    supplier:'fSupplier',
+    country:'fCountry',
+    mode:'fMode',
+    incoterm:'fIncoterm',
+    goods:'fGoods',
+    container:'fContainer',
+    bl:'fBl',
+    invoice:'fInvoice',
+    originPort:'fOriginPort',
+    destPort:'fDestPort',
+    transporter:'fTransporter',
+    orderDate:'fOrderDate',
+    loadDate:'fLoadDate',
+    etd:'fEtd',
+    eta:'fEta',
+    actualArrival:'fActualArrival',
+    status:'fStatus',
+    surestariesStartDate:'fSurestariesStartDate',
+    terminalOutDate:'fTerminalOutDate',
+    freeDays:'fFreeDays',
+    dailyRate:'fDailyRate',
+    containerCount:'fContainerCount',
+    currency:'fCurrency',
+    notes:'fNotes'
+  };
+
+  const out = {};
+  for (const [key, id] of Object.entries(names)) {
+    out[key] = $(id).value.trim();
+  }
+
+  out.articles = readArticles();
+  out.articleReference = out.articles[0]?.reference || '';
+  out.articleNames = out.articles.map(a => a.name).filter(Boolean).join('\n');
+
+  const units = [...new Set(out.articles.map(a => a.unit))];
+  out.unit = units.length === 1 ? units[0] : '';
+  out.quantity = units.length === 1
+    ? out.articles.reduce((sum, a) => sum + a.quantity, 0)
+    : '';
+
+  out.freeDays = out.freeDays === '' ? '' : Number(out.freeDays);
+  out.dailyRate = out.dailyRate === '' ? '' : Number(out.dailyRate);
+  out.containerCount = out.containerCount === '' ? 1 : Number(out.containerCount);
+
+  return out;
+}
 async function deleteShipment(id){if(currentRole!=='admin'){notify('Accès en lecture seule.');return}const s=shipments.find(x=>x.id===id);if(!s)return;if(!confirm(`Supprimer le chargement ${s.ref||''} ? Cette action est définitive.`))return;const {error}=await db.from('shipments').delete().eq('id',id);if(error){notify('Erreur Supabase : '+error.message);return}shipments=shipments.filter(x=>x.id!==id);render();closeModal();notify('Chargement supprimé.')}
 $('shipmentRows').addEventListener('click',e=>{if(currentRole!=='admin')return;const b=e.target.closest('button[data-action]');if(!b)return;if(b.dataset.action==='edit')openModal(b.dataset.id);if(b.dataset.action==='delete')deleteShipment(b.dataset.id)});
 $('newShipment').addEventListener('click',()=>openModal());$('emptyAdd').addEventListener('click',()=>openModal());$('closeModal').addEventListener('click',closeModal);$('cancelModal').addEventListener('click',closeModal);$('modalOverlay').addEventListener('click',e=>{if(e.target===$('modalOverlay'))closeModal()});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('modalOverlay').classList.contains('open'))closeModal()});$('deleteShipment').addEventListener('click',()=>{if(editingId)deleteShipment(editingId)});
