@@ -277,6 +277,7 @@ function calculerTotaux(articles) {
     .join(' · ');
 }
 
+
 function ouvrirArticles(index) {
   const dossier = tousLesDossiers[index];
   if (!dossier) return;
@@ -288,10 +289,14 @@ function ouvrirArticles(index) {
 
   const lignes = articles.map(a => `
     <tr>
-      <td>${safe(a.reference)}</td>
-      <td>${safe(a.name)}</td>
-      <td>${safe(a.quantity)}</td>
-      <td>${safe(a.unit)}</td>
+      <td>${safe(a.reference || '')}</td>
+      <td>${safe(a.name || '')}</td>
+      <td>${safe(a.quantity ?? '')}</td>
+      <td>${safe(a.unit || '')}</td>
+      <td>${safe(a.availability || 'Non renseigné')}</td>
+      <td>${safe(a.availableQuantity ?? 'Non renseigné')}</td>
+      <td>${safe(a.expectedAvailabilityDate || 'Non renseignée')}</td>
+      <td>${safe(a.supplierComment || 'Aucun commentaire')}</td>
     </tr>
   `).join('');
 
@@ -308,12 +313,16 @@ function ouvrirArticles(index) {
           <tr>
             <th>Référence</th>
             <th>Désignation</th>
-            <th>Quantité</th>
+            <th>Quantité commandée</th>
             <th>Unité</th>
+            <th>Disponibilité</th>
+            <th>Quantité disponible</th>
+            <th>Date de disponibilité</th>
+            <th>Commentaire fournisseur</th>
           </tr>
         </thead>
         <tbody>
-          ${lignes || '<tr><td colspan="4">Aucun article enregistré.</td></tr>'}
+          ${lignes || '<tr><td colspan="8">Aucun article enregistré.</td></tr>'}
         </tbody>
       </table>
     </div>
@@ -326,7 +335,6 @@ function ouvrirArticles(index) {
   document.getElementById('modalArticles').style.display = 'flex';
 }
 
-function fermerArticles() {
   document.getElementById('modalArticles').style.display = 'none';
 }
 
