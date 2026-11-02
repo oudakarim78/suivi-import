@@ -106,6 +106,10 @@ body.consultant .table-wrap table{min-width:680px}
           <th>Désignation de l'article</th>
           <th>Quantité</th>
           <th>Unité</th>
+          <th>Disponibilité</th>
+          <th>Qté disponible</th>
+          <th>Date prévue</th>
+          <th>Commentaire fournisseur</th>
           <th>Action</th>
         </tr>
       </thead>
@@ -290,7 +294,7 @@ function render(){
    const lateLabel=daysLate(s)?`<span class="late">En retard (${dayDifference(s.eta,todayISO())} j)</span>`:'';
    const surestariesText=surestariesLabel(s);
    const articlePreview=String(s.articleNames||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean).slice(0,2).join(' · ');
-   if(currentRole==='consultant') { const names=String(s.articleNames||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean); const namesHtml=names.length?names.map(escapeHtml).join('<br>'):'—'; return `<tr><td><div class="supplier">${escapeHtml(s.supplier||'Fournisseur non précisé')}</div></td><td><div style="font-weight:700;white-space:normal;min-width:180px">${namesHtml}</div>${s.articleReference?`<div class="subtext">Réf. : ${escapeHtml(s.articleReference)}</div>`:''}</td><td><div class="quantity">${quant}</div></td><td><div style="font-weight:650;font-size:12px">BL : ${escapeHtml(s.bl||'—')}</div><div class="subtext">Conteneur : ${escapeHtml(s.container||'—')}</div></td><td><span class="status ${STATUS_CLASS[s.status]||'s-commandee'}">${escapeHtml(s.status||'Commandée')}</span></td></tr>`; }
+   if(currentRole==='consultant') { const articleList=Array.isArray(s.articles)&&s.articles.length?s.articles:String(s.articleNames||'').split(/\r?\n/).map(name=>({name:name.trim()})).filter(a=>a.name); const details=articleList.length?articleList.map(a=>`<div style="padding:8px 0;border-bottom:1px solid var(--line, #e5e7eb)"><strong>${escapeHtml(a.name||'Article sans désignation')}</strong>${a.reference?`<div class="subtext">Réf. : ${escapeHtml(a.reference)}</div>`:''}<div class="subtext">Quantité commandée : ${Number(a.quantity||0).toLocaleString('fr-FR')} ${escapeHtml(a.unit||'')}</div><div style="margin-top:4px"><span class="status">${escapeHtml(a.availability||'À confirmer')}</span></div><div class="subtext">Quantité disponible : ${a.availableQuantity==null?'À renseigner':Number(a.availableQuantity).toLocaleString('fr-FR')+' '+escapeHtml(a.unit||'')}</div><div class="subtext">Disponibilité prévue : ${a.expectedAvailabilityDate?fmtDate(a.expectedAvailabilityDate):'Non renseignée'}</div>${a.supplierComment?`<div class="subtext">Information fournisseur : ${escapeHtml(a.supplierComment)}</div>`:''}</div>`).join(''):'—'; return `<tr><td><div class="supplier">${escapeHtml(s.supplier||'Fournisseur non précisé')}</div></td><td style="min-width:260px;white-space:normal">${details}</td><td><div class="quantity">${quant}</div></td><td><div style="font-weight:650;font-size:12px">BL : ${escapeHtml(s.bl||'—')}</div><div class="subtext">Conteneur : ${escapeHtml(s.container||'—')}</div></td><td><span class="status ${STATUS_CLASS[s.status]||'s-commandee'}">${escapeHtml(s.status||'Commandée')}</span></td></tr>`; }
    return `<tr><td><div class="ref">${escapeHtml(s.ref||'Sans référence')}</div><div class="supplier">${escapeHtml(s.supplier||'Fournisseur non précisé')}</div><div class="subtext">${escapeHtml(s.goods||s.country||'')}</div>${articlePreview?`<div class="subtext" title="${escapeHtml(s.articleNames)}" style="max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Articles : ${escapeHtml(articlePreview)}</div>`:''}</td><td><div class="route">${routeText}</div><div class="subtext">${escapeHtml(s.mode||'')} ${s.incoterm?'· '+escapeHtml(s.incoterm):''}</div></td><td><div style="font-weight:650;font-size:12px">${escapeHtml(s.container||'—')}</div><div class="subtext">BL : ${escapeHtml(s.bl||'—')}</div></td><td><div class="quantity">${quant}</div></td><td><div class="date">${fmtDate(s.eta)}</div>${lateLabel}</td><td>${surestariesText}</td><td><span class="status ${STATUS_CLASS[s.status]||'s-commandee'}">${escapeHtml(s.status||'Commandée')}</span></td><td><div class="row-actions"><button class="icon-btn" data-action="edit" data-id="${escapeHtml(s.id)}" title="Modifier" aria-label="Modifier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m14 5 5 5M4 20l4-.8L19 8a2.1 2.1 0 0 0-3-3L5 16l-1 4Z"/></svg></button><button class="icon-btn" data-action="delete" data-id="${escapeHtml(s.id)}" title="Supprimer" aria-label="Supprimer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M10 11v6M14 11v6M5 7l1 14h12l1-14M9 7V4h6v3"/></svg></button></div></td></tr>`;
  }).join('');
 }
@@ -379,6 +383,12 @@ function addArticleRow(article = {}) {
     <td><select class="art-unit">
       ${ARTICLE_UNITS.map(u => `<option value="${u}" ${article.unit === u ? 'selected' : ''}>${u}</option>`).join('')}
     </select></td>
+    <td><select class="art-availability">
+      ${['À confirmer','Disponible en stock','En production','Prêt à expédier','Indisponible','Partiellement disponible'].map(v => `<option value="${v}" ${(article.availability || 'À confirmer') === v ? 'selected' : ''}>${v}</option>`).join('')}
+    </select></td>
+    <td><input class="art-available-qty" type="number" min="0" step="0.01" placeholder="Quantité" value="${article.availableQuantity ?? ''}"></td>
+    <td><input class="art-available-date" type="date" value="${article.expectedAvailabilityDate || ''}"></td>
+    <td><input class="art-comment" type="text" maxlength="500" placeholder="Information fournisseur" value="${escapeHtml(article.supplierComment || '')}"></td>
     <td><button type="button" class="remove-article">Supprimer</button></td>
   `;
 
@@ -400,7 +410,11 @@ function readArticles() {
     reference: tr.querySelector('.art-ref').value.trim(),
     name: tr.querySelector('.art-name').value.trim(),
     quantity: Number(tr.querySelector('.art-qty').value) || 0,
-    unit: tr.querySelector('.art-unit').value
+    unit: tr.querySelector('.art-unit').value,
+    availability: tr.querySelector('.art-availability').value,
+    availableQuantity: tr.querySelector('.art-available-qty').value === '' ? null : Number(tr.querySelector('.art-available-qty').value),
+    expectedAvailabilityDate: tr.querySelector('.art-available-date').value,
+    supplierComment: tr.querySelector('.art-comment').value.trim()
   })).filter(a => a.reference || a.name || a.quantity);
 }
 
