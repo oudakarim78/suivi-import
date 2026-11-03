@@ -30,6 +30,8 @@ body.consultant #newShipment,body.consultant #exportCsv,body.consultant #restore
 body.consultant .table-wrap table{min-width:680px}
 /* La restauration par fichier est désactivée dans cette version sécurisée ; utiliser la sauvegarde JSON comme archive. */
 #restoreBtn{display:none!important}
+@media(max-width:700px){#groupageSection .formgrid{grid-template-columns:1fr 1fr}}
+#groupageSection .group-choice{border:1px solid var(--line);border-radius:9px;padding:9px 11px;font-size:12px;display:flex;gap:8px;align-items:flex-start;background:#fff}
 </style>
 </head>
 <body>
@@ -79,6 +81,29 @@ body.consultant .table-wrap table{min-width:680px}
     <div class="table-wrap"><table><thead id="shipmentHead"><tr><th>Fournisseur</th><th>Référence article</th><th>Quantité</th><th>BL / Conteneur</th><th>Statut</th></tr></thead><tbody id="shipmentRows"></tbody></table></div>
     <div class="empty" id="emptyState"><div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 7.5 12 3l9 4.5-9 4.5-9-4.5Z"/><path d="M3 12l9 4.5 9-4.5M3 16.5 12 21l9-4.5M12 12v9"/></svg></div><strong>Aucun chargement pour le moment</strong>Ajoutez votre première importation pour commencer le suivi.<br><button class="btn primary" style="margin-top:15px" id="emptyAdd">+ Ajouter un chargement</button></div>
     <div class="table-footer"><span id="footerCount">Affichage de 0 chargement</span><span>Les retards et surestaries sont recalculés à chaque ouverture de l’application.</span></div>
+  </section>
+  <section class="main-card" id="groupageSection" style="margin-top:18px">
+    <div class="list-head"><div><h3>Groupage transport</h3><div class="count">Regrouper plusieurs dossiers fournisseurs dans un même camion ou conteneur</div></div></div>
+    <div style="padding:18px 22px">
+      <div class="formgrid" style="margin-bottom:14px">
+        <div class="form-field"><label for="gMode">Mode de transport</label><select id="gMode"><option>Routier</option><option>Maritime</option></select></div>
+        <div class="form-field"><label for="gReference">Référence du groupage</label><input id="gReference" placeholder="Ex. GRP-2026-001"></div>
+        <div class="form-field"><label for="gUnit">Référence camion / conteneur</label><input id="gUnit" placeholder="Immatriculation ou N° conteneur"></div>
+        <div class="form-field"><label for="gTransporter">Transporteur</label><input id="gTransporter" placeholder="Nom du transporteur"></div>
+        <div class="form-field"><label for="gOrigin">Origine</label><input id="gOrigin" placeholder="Ville / port de départ"></div>
+        <div class="form-field"><label for="gDestination">Destination</label><input id="gDestination" placeholder="Ville / port d'arrivée"></div>
+        <div class="form-field"><label for="gLoadDate">Date de chargement</label><input id="gLoadDate" type="date"></div>
+        <div class="form-field"><label for="gEtd">ETD</label><input id="gEtd" type="date"></div>
+        <div class="form-field"><label for="gEta">ETA</label><input id="gEta" type="date"></div>
+        <div class="form-field"><label for="gStatus">Statut</label><select id="gStatus"><option>En préparation</option><option>Chargé</option><option>En transit</option><option>Arrivé</option><option>Clôturé</option></select></div>
+        <div class="form-field full"><label for="gNotes">Notes</label><textarea id="gNotes" placeholder="Informations communes au groupage"></textarea></div>
+      </div>
+      <div class="section-title">Sélectionner les dossiers à regrouper</div>
+      <div id="groupShipmentChoices" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px;margin:10px 0 16px"></div>
+      <button class="btn primary" id="createGroupBtn" type="button">Créer le groupage avec les dossiers sélectionnés</button>
+      <div id="groupageMessage" class="hint" style="margin-top:9px"></div>
+    </div>
+    <div class="table-wrap"><table><thead><tr><th>Référence groupage</th><th>Transport</th><th>Camion / conteneur</th><th>Trajet</th><th>Dossiers associés</th><th>Statut</th></tr></thead><tbody id="groupageRows"><tr><td colspan="6">Aucun groupage chargé.</td></tr></tbody></table></div>
   </section>
   <div class="footer-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Données hébergées dans Supabase. Les droits sont contrôlés par Supabase (RLS), pas uniquement par l’interface.</div>
 </div>
@@ -188,7 +213,7 @@ const STORAGE_KEY='suiviImportData_v1';
   const db=window.supabaseClient;
 const STATUSES=['Commandée','En préparation','Chargé','En transit','Arrivé au port','Dédouanement','En livraison','Livré','Bloqué'];
 const STATUS_CLASS={'Commandée':'s-commandee','En préparation':'s-preparation','Chargé':'s-charge','En transit':'s-transit','Arrivé au port':'s-port','Dédouanement':'s-douane','En livraison':'s-livraison','Livré':'s-livree','Bloqué':'s-bloque'};
-let shipments=loadData(), editingId=null, toastTimer=null;
+let shipments=loadData(), editingId=null, toastTimer=null, shipmentGroups=[];
 let currentUser=null, currentRole=null;
 const $=id=>document.getElementById(id);
 const todayISO=()=>{const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10)};
@@ -237,6 +262,7 @@ async function loadFromSupabase(){
 
  $('lastUpdated').textContent='Données Supabase : '+new Date().toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'});
  render();
+ await loadShipmentGroups();
  return true;
 }
   async function saveShipmentContacts(shipmentId,s){
@@ -512,7 +538,48 @@ $('shipmentForm').addEventListener('submit', async e => {
     button.disabled = false;
     button.textContent = 'Enregistrer';
   }
-});async function deleteShipment(id){if(currentRole!=='admin'){notify('Accès en lecture seule.');return}const s=shipments.find(x=>x.id===id);if(!s)return;if(!confirm(`Supprimer le chargement ${s.ref||''} ? Cette action est définitive.`))return;const {error}=await db.from('shipments').delete().eq('id',id);if(error){notify('Erreur Supabase : '+error.message);return}shipments=shipments.filter(x=>x.id!==id);render();closeModal();notify('Chargement supprimé.')}
+});
+async function loadShipmentGroups(){
+ const {data,error}=await db.from('shipment_groups').select('*').order('created_at',{ascending:false});
+ if(error){console.error(error);$('groupageMessage').textContent='Lecture des groupages impossible : '+error.message;return}
+ shipmentGroups=data||[];
+ const {data:links,error:linkError}=await db.from('shipment_group_members').select('group_id,shipment_id');
+ if(linkError){console.error(linkError);$('groupageMessage').textContent='Lecture des associations impossible : '+linkError.message;return}
+ const countByGroup={};(links||[]).forEach(x=>countByGroup[x.group_id]=(countByGroup[x.group_id]||0)+1);
+ $('groupageRows').innerHTML=shipmentGroups.length?shipmentGroups.map(g=>`<tr><td><strong>${escapeHtml(g.group_reference)}</strong></td><td>${escapeHtml(g.transport_mode)}</td><td>${escapeHtml(g.transport_unit_reference||'—')}</td><td>${escapeHtml((g.origin||'—')+' → '+(g.destination||'—'))}</td><td>${countByGroup[g.id]||0} dossier(s)</td><td>${escapeHtml(g.status||'—')}</td></tr>`).join(''):'<tr><td colspan="6">Aucun groupage créé.</td></tr>';
+ renderGroupChoices();
+}
+function renderGroupChoices(){
+ const linked=new Set();
+ // Les dossiers déjà associés restent visibles mais ne peuvent pas être ajoutés à un second groupage.
+ const box=$('groupShipmentChoices');
+ if(!box)return;
+ if(!shipments.length){box.innerHTML='<span class="hint">Aucun dossier disponible. Créez d’abord les dossiers fournisseurs avec « Nouveau chargement ».</span>';return}
+ db.from('shipment_group_members').select('shipment_id').then(({data,error})=>{
+  if(error){box.textContent='Impossible de vérifier les dossiers déjà groupés : '+error.message;return}
+  (data||[]).forEach(x=>linked.add(x.shipment_id));
+  box.innerHTML=shipments.map(s=>`<label class="group-choice"><input type="checkbox" value="${escapeHtml(s.id)}" ${linked.has(s.id)?'disabled':''}><span><strong>${escapeHtml(s.ref||'Sans référence')}</strong><br>${escapeHtml(s.supplier||'Fournisseur non précisé')} · ${escapeHtml(s.mode||'')}<br><span class="hint">${escapeHtml(s.articleNames||s.goods||'')}</span>${linked.has(s.id)?'<br><span class="hint">Déjà dans un groupage</span>':''}</span></label>`).join('');
+ });
+}
+function makeGroupRef(){const y=new Date().getFullYear();let n=shipmentGroups.length+1;let r;do{r=`GRP-${y}-${String(n++).padStart(3,'0')}`}while(shipmentGroups.some(g=>g.group_reference===r));return r}
+$('createGroupBtn').addEventListener('click',async()=>{
+ if(currentRole!=='admin'){notify('Accès réservé à l’administrateur.');return}
+ const ids=[...$('groupShipmentChoices').querySelectorAll('input[type=checkbox]:checked')].map(x=>x.value);
+ if(ids.length<2){notify('Sélectionnez au moins deux dossiers fournisseurs.');return}
+ const ref=$('gReference').value.trim()||makeGroupRef();
+ const row={user_id:currentUser.id,group_reference:ref,transport_mode:$('gMode').value,transport_unit_reference:$('gUnit').value.trim()||null,transporter:$('gTransporter').value.trim()||null,origin:$('gOrigin').value.trim()||null,destination:$('gDestination').value.trim()||null,load_date:$('gLoadDate').value||null,etd:$('gEtd').value||null,eta:$('gEta').value||null,status:$('gStatus').value,notes:$('gNotes').value.trim()||null,updated_at:new Date().toISOString()};
+ const btn=$('createGroupBtn');btn.disabled=true;btn.textContent='Enregistrement…';
+ try{
+  const {data:g,error}=await db.from('shipment_groups').insert(row).select('*').single();if(error)throw error;
+  const members=ids.map(shipment_id=>({group_id:g.id,shipment_id}));
+  const {error:memberError}=await db.from('shipment_group_members').insert(members);
+  if(memberError){await db.from('shipment_groups').delete().eq('id',g.id);throw memberError}
+  $('gReference').value='';$('gUnit').value='';$('gTransporter').value='';$('gOrigin').value='';$('gDestination').value='';$('gLoadDate').value='';$('gEtd').value='';$('gEta').value='';$('gNotes').value='';
+  $('groupageMessage').textContent=`Groupage ${ref} créé avec ${ids.length} dossiers.`;notify('Groupage créé avec succès.');await loadShipmentGroups();
+ }catch(err){notify('Erreur groupage : '+err.message);$('groupageMessage').textContent='Erreur : '+err.message}
+ finally{btn.disabled=false;btn.textContent='Créer le groupage avec les dossiers sélectionnés'}
+});
+async function deleteShipment(id){if(currentRole!=='admin'){notify('Accès en lecture seule.');return}const s=shipments.find(x=>x.id===id);if(!s)return;if(!confirm(`Supprimer le chargement ${s.ref||''} ? Cette action est définitive.`))return;const {error}=await db.from('shipments').delete().eq('id',id);if(error){notify('Erreur Supabase : '+error.message);return}shipments=shipments.filter(x=>x.id!==id);render();closeModal();notify('Chargement supprimé.')}
 $('shipmentRows').addEventListener('click',e=>{if(currentRole!=='admin')return;const b=e.target.closest('button[data-action]');if(!b)return;if(b.dataset.action==='edit')openModal(b.dataset.id);if(b.dataset.action==='delete')deleteShipment(b.dataset.id)});
 $('newShipment').addEventListener('click',()=>openModal());$('emptyAdd').addEventListener('click',()=>openModal());$('closeModal').addEventListener('click',closeModal);$('cancelModal').addEventListener('click',closeModal);$('modalOverlay').addEventListener('click',e=>{if(e.target===$('modalOverlay'))closeModal()});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('modalOverlay').classList.contains('open'))closeModal()});$('deleteShipment').addEventListener('click',()=>{if(editingId)deleteShipment(editingId)});
 ['search','statusFilter','modeFilter','sortFilter'].forEach(id=>$(id).addEventListener(id==='search'?'input':'change',render));$('resetFilters').addEventListener('click',()=>{$('search').value='';$('statusFilter').value='';$('modeFilter').value='';$('sortFilter').value='eta';render()});
