@@ -4,469 +4,318 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#17365d">
 <title>Consultation des importations</title>
+
 <style>
 *{box-sizing:border-box}
-body{font-family:Arial,sans-serif;margin:0;padding:20px;background:#f4f6f9;color:#263445}
-.container{max-width:1250px;margin:auto}
-h2,h3{color:#17365d}
-.card{background:white;border:1px solid #dce3ec;border-radius:12px;padding:18px;margin:15px 0;box-shadow:0 2px 7px #0000000a}
-.login{max-width:420px;margin:70px auto}
-input,select,button{padding:11px;border:1px solid #ccd4df;border-radius:7px;font-size:14px}
-input,select{max-width:100%}
-button{background:#17365d;color:white;border:0;cursor:pointer}
-button:disabled{opacity:.5}
-.login input{width:100%;margin:7px 0}
-.filters{display:flex;gap:10px;flex-wrap:wrap;margin:15px 0}
-.filters input{flex:2;min-width:220px}
-.filters select{flex:1;min-width:180px}
-.muted{color:#718096;font-size:13px}
-.message{padding:12px;background:#eaf0f8;border-radius:8px;margin:12px 0}
-.error{background:#fdecec;color:#a12626}
-.section-title{margin-top:28px;padding-bottom:8px;border-bottom:2px solid #dce3ec}
+body{font-family:Arial,sans-serif;margin:0;background:#f3f6fa;color:#263445}
+header{background:#17365d;color:white;padding:22px 16px}
+.container{max-width:1200px;margin:auto;padding:20px}
+h1{font-size:23px;margin:0 0 6px}
+header p{margin:0;color:#dce7f5;font-size:14px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}
+input,select{padding:12px;border:1px solid #ccd5e0;border-radius:8px;font-size:14px;background:white}
+input{flex:1;min-width:220px}
+select{min-width:190px}
+.section-title{font-size:19px;color:#17365d;margin:28px 0 12px}
+.card{background:white;border:1px solid #e0e6ed;border-radius:12px;padding:17px;margin-bottom:13px;box-shadow:0 2px 7px #17365d0b}
+.card-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.card h3{font-size:17px;margin:0;color:#17365d}
+.badge{display:inline-block;padding:6px 10px;border-radius:20px;background:#e8eef7;color:#17365d;font-size:12px;font-weight:bold}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
-.info{background:#f6f8fb;padding:10px;border-radius:7px;overflow-wrap:anywhere}
-.info strong{display:block;font-size:12px;color:#68778a;margin-bottom:5px}
-.status{display:inline-block;background:#e8eef7;color:#17365d;border-radius:20px;padding:6px 10px;font-weight:bold;font-size:13px}
-.group{border-left:5px solid #2875bd}
-.surestaries{background:#fff5e6;border:1px solid #f0d6a8;padding:12px;border-radius:8px;margin:12px 0}
-.surestaries strong{color:#895500}
-.supplier{border:1px solid #dce3ec;border-radius:9px;padding:14px;margin:12px 0;background:#fbfcfe}
-.supplier h4{margin:0 0 12px;color:#17365d}
-table{width:100%;border-collapse:collapse;min-width:650px}
-th,td{text-align:left;padding:10px;border-bottom:1px solid #e1e5eb;font-size:13px}
-th{background:#17365d;color:white}
-.table-wrap{overflow-x:auto;margin-top:12px}
-details{margin-top:12px}
-summary{cursor:pointer;color:#174f87;font-weight:bold;padding:8px 0}
-.empty{padding:20px;text-align:center;color:#718096}
-.topbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
-button.secondary{background:#68778a}
-@media(max-width:600px){body{padding:10px}.card{padding:13px}.filters>*{width:100%}}
+.field{font-size:13px;color:#68778a;overflow-wrap:anywhere}
+.field strong{display:block;color:#263445;font-size:14px;margin-top:4px}
+.subcard{background:#f7f9fc;border:1px solid #e4eaf1;border-radius:9px;padding:13px;margin-top:10px}
+.subcard h4{margin:0 0 10px;color:#17365d;font-size:14px}
+.article{font-size:13px;margin-top:7px;color:#34465b}
+.surestaries{margin-top:13px;padding:12px;border-radius:8px;background:#fff8e8;border:1px solid #f0dfb5;font-size:13px}
+.surestaries strong{color:#815b12}
+.empty,.loading,.error{padding:25px;text-align:center;background:white;border-radius:10px;color:#68778a}
+.error{color:#a52828}
+.small{font-size:12px;color:#77869a;margin-top:12px}
+button{border:0;background:#17365d;color:white;padding:10px 15px;border-radius:8px;cursor:pointer}
+button:hover{background:#244c7b}
+@media(max-width:600px){.container{padding:13px}.card{padding:13px}h1{font-size:20px}}
 </style>
 </head>
+
 <body>
+<header>
+  <div class="container">
+    <h1>Consultation des importations</h1>
+    <p>Suivi des chargements individuels et des groupages</p>
+  </div>
+</header>
 
-<div class="container">
+<main class="container">
+  <div class="toolbar">
+    <input id="search" type="search" placeholder="Rechercher fournisseur, article, BL, conteneur...">
+    <select id="statusFilter">
+      <option value="">Tous les statuts</option>
+      <option>Commandée</option>
+      <option>En préparation</option>
+      <option>Chargé</option>
+      <option>En transit</option>
+      <option>Arrivé au port</option>
+      <option>Dédouanement</option>
+      <option>En livraison</option>
+      <option>Livré</option>
+      <option>Bloqué</option>
+      <option>Annulée</option>
+    </select>
+    <button id="refreshBtn" type="button">Actualiser</button>
+  </div>
 
-<div id="loginBox" class="card login">
-<h2>Suivi des importations</h2>
-<p class="muted">Connexion à votre espace de consultation</p>
-<form id="loginForm">
-<input id="email" type="email" placeholder="Adresse e-mail" required>
-<input id="password" type="password" placeholder="Mot de passe" required>
-<button id="loginButton" type="submit" style="width:100%">Se connecter</button>
-</form>
-<div id="loginError" class="message error" hidden></div>
-</div>
+  <div id="loading" class="loading">Chargement des données...</div>
+  <div id="error" class="error" hidden></div>
 
-<div id="app" hidden>
-<div class="topbar">
-<div>
-<h2>Suivi des importations</h2>
-<p class="muted">Espace de consultation — lecture seule</p>
-</div>
-<div>
-<span id="accountInfo" class="muted"></span>
-<button id="logoutButton" class="secondary">Déconnexion</button>
-</div>
-</div>
+  <section>
+    <h2 class="section-title">Chargements individuels</h2>
+    <div id="individualList"></div>
+  </section>
 
-<div id="message" class="message">Chargement...</div>
+  <section>
+    <h2 class="section-title">Chargements en groupage</h2>
+    <div id="groupList"></div>
+  </section>
 
-<div class="filters">
-<input id="search" type="search" placeholder="Rechercher fournisseur, article, facture, BL, conteneur...">
-<select id="statusFilter">
-<option value="">Tous les statuts</option>
-<option>Commandée</option>
-<option>En préparation</option>
-<option>Chargé</option>
-<option>En transit</option>
-<option>Arrivé au port</option>
-<option>Dédouanement</option>
-<option>En livraison</option>
-<option>Livré</option>
-<option>Bloqué</option>
-<option>Annulée</option>
-</select>
-<button id="resetButton" type="button">Réinitialiser</button>
-<button id="refreshButton" type="button" class="secondary">Actualiser</button>
-</div>
-
-<h2 class="section-title">Chargements individuels</h2>
-<div id="individualList"></div>
-
-<h2 class="section-title">Chargements en groupage</h2>
-<div id="groupList"></div>
-</div>
-</div>
+  <p class="small">Page de consultation en lecture seule.</p>
+</main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const SUPABASE_URL='https://mnyokiniupvtzesdmwit.supabase.co';
-const SUPABASE_KEY='sb_publishable_-HIf7IptcZ1as_TXkn5SCQ_Fx6lPnbi';
-const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const SUPABASE_URL = 'https://mnyokiniupvtzesdmwit.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_-HIf7IptcZ1as_TXfx6lPnbi';
 
-let currentUser=null;
-let currentRole=null;
-let shipments=[];
-let groups=[];
-let memberships=[];
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const $=id=>document.getElementById(id);
+let shipments = [];
+let groups = [];
+let memberships = [];
 
-function safe(v){
- return String(v??'—').replace(/[&<>"']/g,c=>({
-  '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
- }[c]));
+const $ = id => document.getElementById(id);
+
+function esc(value){
+  return String(value ?? '').replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
 }
 
-function dateText(v){
- if(!v)return '—';
- const d=new Date(v+'T00:00:00');
- return isNaN(d)?safe(v):d.toLocaleDateString('fr-FR');
+function valueOrDash(value){
+  return value !== null && value !== undefined && value !== ''
+    ? esc(value) : '—';
 }
 
-function money(v,currency){
- if(v===null||v===undefined||v==='')return 'À calculer';
- return Number(v).toLocaleString('fr-FR',{
-  minimumFractionDigits:2,maximumFractionDigits:2
- })+' '+(currency||'MAD');
+function formatDate(value){
+  if(!value) return '—';
+  const d = new Date(value + (String(value).length === 10 ? 'T00:00:00' : ''));
+  return Number.isNaN(d.getTime()) ? esc(value) :
+    d.toLocaleDateString('fr-FR');
 }
 
-function normalize(v){
- return String(v??'').normalize('NFD')
-  .replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+function statusBadge(status){
+  return `<span class="badge">${valueOrDash(status)}</span>`;
 }
 
-function getArticles(s){
- if(Array.isArray(s.articles)&&s.articles.length)return s.articles;
+function articleDetails(row){
+  let result = '';
 
- if(s.article_names){
-  return [{
-   reference:s.article_reference||'',
-   name:s.article_names,
-   quantity:s.quantity,
-   unit:s.unit
-  }];
- }
- return [];
+  if(row.article_names){
+    result += `<div class="article"><strong>Articles :</strong> ${esc(row.article_names)}</div>`;
+  }
+
+  if(row.article_reference){
+    result += `<div class="article"><strong>Références articles :</strong> ${esc(row.article_reference)}</div>`;
+  }
+
+  if(Array.isArray(row.articles) && row.articles.length){
+    result += row.articles.map(a => {
+      if(typeof a === 'string') return `<div class="article">• ${esc(a)}</div>`;
+      const name = a.name || a.article_name || a.articleName || a.designation || a.product || '';
+      const ref = a.reference || a.article_reference || a.articleReference || '';
+      const qty = a.quantity ?? a.quantite ?? '';
+      const unit = a.unit || a.unite || '';
+      const detail = [name, ref ? 'Réf. ' + ref : '', qty !== '' ? qty + ' ' + unit : ''].filter(Boolean).join(' — ');
+      return detail ? `<div class="article">• ${esc(detail)}</div>` : '';
+    }).join('');
+  }
+
+  return result || '<div class="article">Détails des articles non renseignés</div>';
 }
 
-function articleTotals(articles){
- const totals={};
- articles.forEach(a=>{
-  const unit=a.unit||'Autre';
-  totals[unit]=(totals[unit]||0)+(Number(a.quantity)||0);
- });
- return Object.entries(totals)
-  .map(([u,n])=>n.toLocaleString('fr-FR')+' '+u).join(' · ');
-}
+function individualSurestaries(row){
+  const start = row.surestaries_start_date;
+  const free = row.free_days;
+  const rate = row.daily_rate;
 
-function dayDifference(start,end){
- if(!start||!end)return 0;
- const a=Date.parse(start+'T00:00:00Z');
- const b=Date.parse(end+'T00:00:00Z');
- if(!Number.isFinite(a)||!Number.isFinite(b))return 0;
- return Math.round((b-a)/86400000);
-}
+  if(!start || free === null || free === undefined || free === '' ||
+     rate === null || rate === undefined || rate === '') return '';
 
-/* Même formule que le chargement individuel :
-   jours calendaires inclusifs, moins franchise,
-   multipliés par tarif journalier et nombre de conteneurs. */
-function calculateSurestaries(g){
- const start=g.surestaries_start_date||'';
- const end=g.terminal_out_date||new Date().toISOString().slice(0,10);
- const hasFree=g.free_days!==null&&g.free_days!==undefined&&g.free_days!==''&&Number(g.free_days)>=0;
- const hasRate=g.daily_rate!==null&&g.daily_rate!==undefined&&g.daily_rate!==''&&Number(g.daily_rate)>=0;
- const totalDays=start?Math.max(0,dayDifference(start,end)+1):0;
- const freeDays=hasFree?Math.floor(Number(g.free_days)):null;
- const chargeableDays=start&&hasFree?Math.max(0,totalDays-freeDays):0;
- const count=Math.max(1,Math.floor(Number(g.container_count)||1));
- const amount=start&&hasFree&&hasRate?chargeableDays*Number(g.daily_rate)*count:null;
- return {start,end,totalDays,freeDays,chargeableDays,count,amount,hasFree,hasRate,currency:g.currency||'MAD'};
-}
+  const end = row.terminal_out_date || new Date().toISOString().slice(0,10);
+  const startMs = Date.parse(start + 'T00:00:00Z');
+  const endMs = Date.parse(end + 'T00:00:00Z');
 
-function surestariesHtml(g){
- const c=calculateSurestaries(g);
- if(!c.start)return '<div class="surestaries">Début du compteur non renseigné.</div>';
+  if(!Number.isFinite(startMs) || !Number.isFinite(endMs)) return '';
 
- let result='';
- if(!c.hasFree)result='<p>Franchise : non renseignée</p>';
- else result='<p>Franchise : '+safe(c.freeDays)+' jour(s)</p>';
-
- if(!c.hasRate)result+='<p>Tarif journalier : non renseigné</p>';
- else result+='<p>Tarif journalier / conteneur : '+safe(money(g.daily_rate,c.currency))+'</p>';
-
- result+=`
- <p>Début du compteur : ${dateText(c.start)}</p>
- <p>Fin du calcul : ${dateText(g.terminal_out_date||c.end)} ${g.terminal_out_date?'(sortie du terminal)':'(jusqu’à aujourd’hui)'}</p>
- <p>Nombre de conteneurs : ${safe(c.count)}</p>
- <p>Durée totale : ${safe(c.totalDays)} jour(s)</p>
- <p>Jours facturables : <strong>${safe(c.chargeableDays)} jour(s)</strong></p>
- <p>Coût estimé : <strong>${safe(money(c.amount,c.currency))}</strong></p>
- `;
- return '<div class="surestaries"><strong>Calcul des surestaries du groupage</strong>'+result+'</div>';
-}
-
-function articleTable(articles){
- if(!articles.length)return '<p class="muted">Aucun article enregistré.</p>';
-
- return `
- <div class="table-wrap">
- <table>
- <thead><tr>
- <th>Référence</th><th>Désignation</th><th>Quantité</th><th>Unité</th>
- </tr></thead>
- <tbody>
- ${articles.map(a=>`
- <tr>
- <td>${safe(a.reference||'—')}</td>
- <td>${safe(a.name||a.article_name||'—')}</td>
- <td>${safe(a.quantity??'—')}</td>
- <td>${safe(a.unit||'—')}</td>
- </tr>`).join('')}
- </tbody>
- </table>
- </div>`;
-}
-
-function matchesSearch(obj){
- const q=normalize($('search').value);
- const status=normalize($('statusFilter').value);
- if(status&&normalize(obj.status)!==status)return false;
- if(!q)return true;
-
- const articles=getArticles(obj);
- const content=[
-  obj.reference,obj.ref,obj.group_reference,obj.supplier,obj.invoice,
-  obj.container,obj.bl,obj.transport_unit_reference,obj.transporter,
-  obj.origin,obj.destination,obj.etd,obj.eta,obj.status,
-  ...articles.flatMap(a=>[a.reference,a.name,a.quantity,a.unit])
- ].join(' ');
- return normalize(content).includes(q);
-}
-
-function renderIndividual(){
- const groupedIds=new Set(memberships.map(m=>String(m.shipment_id)));
- const list=shipments.filter(s=>!groupedIds.has(String(s.id))&&matchesSearch(s));
-
- if(!list.length){
-  $('individualList').innerHTML='<div class="card empty">Aucun chargement individuel trouvé.</div>';
-  return;
- }
-
- $('individualList').innerHTML=list.map(s=>{
-  const articles=getArticles(s);
-  return `
-  <div class="card">
-   <h3>${safe(s.reference||s.ref||'Chargement')} — ${safe(s.supplier||'Sans fournisseur')}</h3>
-   <div class="grid">
-    <div class="info"><strong>Référence dossier</strong>${safe(s.reference||s.ref)}</div>
-    <div class="info"><strong>Facture fournisseur</strong>${safe(s.invoice)}</div>
-    <div class="info"><strong>BL</strong>${safe(s.bl)}</div>
-    <div class="info"><strong>Conteneur</strong>${safe(s.container)}</div>
-    <div class="info"><strong>ETD</strong>${dateText(s.etd)}</div>
-    <div class="info"><strong>ETA</strong>${dateText(s.eta)}</div>
-    <div class="info"><strong>Statut</strong><span class="status">${safe(s.status)}</span></div>
-    <div class="info"><strong>Quantité totale</strong>${safe(articleTotals(articles)||s.quantity+' '+(s.unit||''))}</div>
-   </div>
-   <details><summary>Voir les articles (${articles.length})</summary>${articleTable(articles)}</details>
-  </div>`;
- }).join('');
-}
-
-function renderGroups(){
- const list=groups.filter(g=>{
-  const linked=memberships.filter(m=>String(m.group_id)===String(g.id));
-  const supplierRows=linked.map(m=>shipments.find(s=>String(s.id)===String(m.shipment_id))).filter(Boolean);
-  const groupText=normalize([
-   g.group_reference,g.transport_mode,g.transport_unit_reference,
-   g.transporter,g.origin,g.destination,g.status,
-   ...supplierRows.flatMap(s=>[
-    s.supplier,s.invoice,s.reference,s.bl,s.container,
-    ...getArticles(s).flatMap(a=>[a.name,a.reference,a.quantity,a.unit])
-   ])
-  ].join(' '));
-  const q=normalize($('search').value);
-  const status=normalize($('statusFilter').value);
-  const statusMatch=!status||normalize(g.status)===status||supplierRows.some(s=>normalize(s.status)===status);
-  return statusMatch&&(!q||groupText.includes(q));
- });
-
- if(!list.length){
-  $('groupList').innerHTML='<div class="card empty">Aucun groupage trouvé.</div>';
-  return;
- }
-
- $('groupList').innerHTML=list.map(g=>{
-  const linked=memberships.filter(m=>String(m.group_id)===String(g.id));
-  const supplierRows=linked.map(m=>shipments.find(s=>String(s.id)===String(m.shipment_id))).filter(Boolean);
+  const totalDays = Math.max(0, Math.round((endMs - startMs) / 86400000) + 1);
+  const freeDays = Math.max(0, Math.floor(Number(free)));
+  const chargeableDays = Math.max(0, totalDays - freeDays);
+  const count = Math.max(1, Math.floor(Number(row.container_count) || 1));
+  const amount = chargeableDays * Number(rate) * count;
+  const currency = row.currency || 'MAD';
 
   return `
-  <div class="card group">
-   <h3>Groupage ${safe(g.group_reference||'')}</h3>
-   <div class="grid">
-    <div class="info"><strong>Mode de transport</strong>${safe(g.transport_mode)}</div>
-    <div class="info"><strong>Unité de transport / conteneur</strong>${safe(g.transport_unit_reference)}</div>
-    <div class="info"><strong>Transporteur</strong>${safe(g.transporter)}</div>
-    <div class="info"><strong>Origine</strong>${safe(g.origin)}</div>
-    <div class="info"><strong>Destination</strong>${safe(g.destination)}</div>
-    <div class="info"><strong>Date de chargement</strong>${dateText(g.load_date)}</div>
-    <div class="info"><strong>ETD</strong>${dateText(g.etd)}</div>
-    <div class="info"><strong>ETA</strong>${dateText(g.eta)}</div>
-    <div class="info"><strong>Statut du groupage</strong><span class="status">${safe(g.status)}</span></div>
-    <div class="info"><strong>Nombre de fournisseurs</strong>${supplierRows.length}</div>
-   </div>
-
-   ${surestariesHtml(g)}
-
-   <h3>Fournisseurs et marchandises</h3>
-   ${supplierRows.length?supplierRows.map(s=>{
-    const articles=getArticles(s);
-    return `
-    <div class="supplier">
-     <h4>${safe(s.supplier||'Fournisseur non renseigné')}</h4>
-     <div class="grid">
-      <div class="info"><strong>Référence dossier</strong>${safe(s.reference||s.ref)}</div>
-      <div class="info"><strong>Numéro de facture</strong>${safe(s.invoice)}</div>
-      <div class="info"><strong>BL</strong>${safe(s.bl)}</div>
-      <div class="info"><strong>Conteneur</strong>${safe(s.container||g.transport_unit_reference)}</div>
-      <div class="info"><strong>ETD fournisseur</strong>${dateText(s.etd)}</div>
-      <div class="info"><strong>ETA fournisseur</strong>${dateText(s.eta)}</div>
-      <div class="info"><strong>Statut dossier</strong><span class="status">${safe(s.status)}</span></div>
-      <div class="info"><strong>Total quantités</strong>${safe(articleTotals(articles)||'—')}</div>
-     </div>
-     <details open>
-      <summary>Articles du fournisseur (${articles.length})</summary>
-      ${articleTable(articles)}
-     </details>
+    <div class="surestaries">
+      <strong>Surestaries — chargement individuel</strong><br>
+      Début du calcul : ${formatDate(start)}<br>
+      Jours écoulés : ${totalDays}<br>
+      Jours gratuits : ${freeDays}<br>
+      Jours facturables : ${chargeableDays}<br>
+      Nombre de conteneurs : ${count}<br>
+      Tarif journalier : ${esc(rate)} ${esc(currency)}<br>
+      <strong>Montant estimé : ${amount.toLocaleString('fr-FR')} ${esc(currency)}</strong>
+      ${row.terminal_out_date ? '<br>Sortie du terminal : ' + formatDate(row.terminal_out_date) : '<br>Calcul en cours'}
     </div>`;
-   }).join(''):'<p class="muted">Aucun dossier fournisseur associé à ce groupage.</p>'}
+}
 
-   ${g.notes?'<p><strong>Notes :</strong> '+safe(g.notes)+'</p>':''}
-  </div>`;
- }).join('');
+function renderIndividual(row){
+  return `
+    <article class="card">
+      <div class="card-head">
+        <h3>${valueOrDash(row.reference || 'Chargement individuel')}</h3>
+        ${statusBadge(row.status)}
+      </div>
+      <div class="grid">
+        <div class="field">Fournisseur<strong>${valueOrDash(row.supplier)}</strong></div>
+        <div class="field">N° facture<strong>${valueOrDash(row.invoice)}</strong></div>
+        <div class="field">Connaissement BL<strong>${valueOrDash(row.bl)}</strong></div>
+        <div class="field">Conteneur<strong>${valueOrDash(row.container)}</strong></div>
+        <div class="field">Quantité<strong>${valueOrDash(row.quantity)} ${valueOrDash(row.unit)}</strong></div>
+      </div>
+      ${articleDetails(row)}
+      ${individualSurestaries(row)}
+    </article>`;
+}
+
+function renderGroup(group){
+  const groupMembers = memberships.filter(m => String(m.group_id) === String(group.id));
+  const memberRows = groupMembers
+    .map(m => shipments.find(s => String(s.id) === String(m.shipment_id)))
+    .filter(Boolean);
+
+  const suppliersHtml = memberRows.length
+    ? memberRows.map(row => `
+      <div class="subcard">
+        <h4>Fournisseur : ${valueOrDash(row.supplier)}</h4>
+        <div class="grid">
+          <div class="field">N° facture<strong>${valueOrDash(row.invoice)}</strong></div>
+          <div class="field">BL<strong>${valueOrDash(row.bl)}</strong></div>
+          <div class="field">Conteneur<strong>${valueOrDash(row.container)}</strong></div>
+          <div class="field">Quantité<strong>${valueOrDash(row.quantity)} ${valueOrDash(row.unit)}</strong></div>
+          <div class="field">Statut<strong>${valueOrDash(row.status)}</strong></div>
+        </div>
+        ${articleDetails(row)}
+      </div>
+    `).join('')
+    : '<div class="empty">Aucun dossier fournisseur associé à ce groupage.</div>';
+
+  return `
+    <article class="card">
+      <div class="card-head">
+        <h3>${valueOrDash(group.group_reference || 'Groupage')}</h3>
+        ${statusBadge(group.status)}
+      </div>
+      <div class="grid">
+        <div class="field">Mode de transport<strong>${valueOrDash(group.transport_mode)}</strong></div>
+        <div class="field">Référence transport / conteneur<strong>${valueOrDash(group.transport_unit_reference)}</strong></div>
+        <div class="field">Transporteur<strong>${valueOrDash(group.transporter)}</strong></div>
+        <div class="field">Origine<strong>${valueOrDash(group.origin)}</strong></div>
+        <div class="field">Destination<strong>${valueOrDash(group.destination)}</strong></div>
+        <div class="field">Date de chargement<strong>${formatDate(group.load_date)}</strong></div>
+      </div>
+      <h4 style="color:#17365d;margin:18px 0 8px">Dossiers des fournisseurs</h4>
+      ${suppliersHtml}
+    </article>`;
+}
+
+function matchesSearch(row, query){
+  if(!query) return true;
+  return JSON.stringify(row).toLowerCase().includes(query);
 }
 
 function render(){
- renderIndividual();
- renderGroups();
+  const query = $('search').value.trim().toLowerCase();
+  const status = $('statusFilter').value;
+
+  const groupedShipmentIds = new Set(
+    memberships.map(m => String(m.shipment_id))
+  );
+
+  const individualRows = shipments.filter(row =>
+    !groupedShipmentIds.has(String(row.id)) &&
+    (!status || row.status === status) &&
+    matchesSearch(row, query)
+  );
+
+  const groupRows = groups.filter(group => {
+    if(status && group.status !== status) return false;
+    if(!query) return true;
+
+    const memberRows = memberships
+      .filter(m => String(m.group_id) === String(group.id))
+      .map(m => shipments.find(s => String(s.id) === String(m.shipment_id)))
+      .filter(Boolean);
+
+    return matchesSearch(group, query) ||
+      memberRows.some(row => matchesSearch(row, query));
+  });
+
+  $('individualList').innerHTML = individualRows.length
+    ? individualRows.map(renderIndividual).join('')
+    : '<div class="empty">Aucun chargement individuel trouvé.</div>';
+
+  $('groupList').innerHTML = groupRows.length
+    ? groupRows.map(renderGroup).join('')
+    : '<div class="empty">Aucun groupage trouvé.</div>';
 }
 
 async function loadData(){
- $('message').textContent='Chargement des importations...';
+  $('loading').hidden = false;
+  $('error').hidden = true;
 
- const [shipResult,groupResult,memberResult]=await Promise.all([
-  db.from('shipments').select('*').order('created_at',{ascending:false}),
-  db.from('shipment_groups').select('*').order('created_at',{ascending:false}),
-  db.from('shipment_group_members').select('group_id,shipment_id')
- ]);
+  try{
+    const [shipmentResult, groupResult, memberResult] = await Promise.all([
+      db.from('shipment_consultation_public').select('*'),
+      db.from('shipment_groups_public').select('*'),
+      db.from('shipment_group_members_public').select('*')
+    ]);
 
- if(shipResult.error){
-  $('message').textContent='Erreur de lecture des chargements : '+shipResult.error.message;
-  $('message').className='message error';
-  return;
- }
- if(groupResult.error){
-  $('message').textContent='Erreur de lecture des groupages : '+groupResult.error.message;
-  $('message').className='message error';
-  return;
- }
- if(memberResult.error){
-  $('message').textContent='Erreur de lecture des associations : '+memberResult.error.message;
-  $('message').className='message error';
-  return;
- }
+    if(shipmentResult.error) throw shipmentResult.error;
+    if(groupResult.error) throw groupResult.error;
+    if(memberResult.error) throw memberResult.error;
 
- shipments=shipResult.data||[];
- groups=groupResult.data||[];
- memberships=memberResult.data||[];
+    shipments = shipmentResult.data || [];
+    groups = groupResult.data || [];
+    memberships = memberResult.data || [];
 
- $('message').textContent=
-  shipments.length+' dossier(s) fournisseur · '+
-  groups.length+' groupage(s) chargé(s).';
-
- $('message').className='message';
- render();
-}
-
-async function checkRole(user){
- const {data,error}=await db.from('user_roles')
-  .select('role').eq('user_id',user.id).maybeSingle();
-
- if(error)throw new Error('Vérification des droits impossible : '+error.message);
- if(!data||!['admin','consultant'].includes(data.role)){
-  throw new Error('Ce compte ne possède pas de rôle autorisé. Contactez l’administrateur.');
- }
- currentRole=data.role;
- currentUser=user;
- $('accountInfo').textContent=(user.email||'Compte')+' · '+(currentRole==='admin'?'Administrateur':'Consultant');
- $('loginBox').hidden=true;
- $('app').hidden=false;
- await loadData();
-}
-
-$('loginForm').addEventListener('submit',async e=>{
- e.preventDefault();
- $('loginError').hidden=true;
- $('loginButton').disabled=true;
- $('loginButton').textContent='Connexion...';
-
- const {data,error}=await db.auth.signInWithPassword({
-  email:$('email').value.trim(),
-  password:$('password').value
- });
-
- $('loginButton').disabled=false;
- $('loginButton').textContent='Se connecter';
-
- if(error){
-  $('loginError').textContent='Connexion refusée : '+error.message;
-  $('loginError').hidden=false;
-  return;
- }
-
- try{
-  await checkRole(data.user);
- }catch(err){
-  await db.auth.signOut();
-  $('loginError').textContent=err.message;
-  $('loginError').hidden=false;
- }
-});
-
-$('logoutButton').addEventListener('click',async()=>{
- await db.auth.signOut();
- currentUser=null;
- currentRole=null;
- shipments=[];
- groups=[];
- memberships=[];
- $('app').hidden=true;
- $('loginBox').hidden=false;
- $('password').value='';
-});
-
-$('search').addEventListener('input',render);
-$('statusFilter').addEventListener('change',render);
-$('resetButton').addEventListener('click',()=>{
- $('search').value='';
- $('statusFilter').value='';
- render();
-});
-$('refreshButton').addEventListener('click',loadData);
-
-db.auth.getSession().then(async({data,error})=>{
- if(error)return;
- if(data.session){
-  try{await checkRole(data.session.user)}
-  catch(err){
-   $('loginError').textContent=err.message;
-   $('loginError').hidden=false;
+    render();
+  }catch(error){
+    console.error(error);
+    $('error').hidden = false;
+    $('error').textContent =
+      'Impossible de charger les données. Vérifie les vues publiques et les autorisations Supabase. Détail : ' +
+      (error.message || 'Erreur inconnue');
+  }finally{
+    $('loading').hidden = true;
   }
- }
-});
+}
+
+$('search').addEventListener('input', render);
+$('statusFilter').addEventListener('change', render);
+$('refreshBtn').addEventListener('click', loadData);
+
+loadData();
 </script>
 </body>
 </html>
