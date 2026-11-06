@@ -1,414 +1,136 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Consultation des importations</title>
-
+<title>Suivi des importations — Consultation</title>
 <style>
-body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f9;color:#263445}
-h2{color:#17365d}
-.container{max-width:1200px;margin:auto}
-#message{padding:12px;margin:12px 0;background:#e8eef7;border-radius:8px}
-.filtres{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:15px 0}
-.filtres input{flex:2 1 300px;min-width:200px}
-.filtres select{flex:1 1 180px;min-width:160px}
-.filtres input,.filtres select,.filtres button{padding:10px 12px;border:1px solid #ccc;border-radius:6px;font-size:14px}
-.filtres button,.btn-articles{background:#17365d;color:white;border:0;border-radius:7px;padding:10px 16px;cursor:pointer}
-#dossiers{display:grid;grid-template-columns:1fr;gap:16px}
-.dossier-card{background:white;border:1px solid #dce3ec;border-radius:12px;padding:18px;box-shadow:0 2px 7px rgba(0,0,0,.06)}
-.dossier-card h3{color:#17365d;margin:0 0 12px}
-.dossier-infos{display:flex;flex-wrap:wrap;gap:10px 24px;margin-bottom:14px}
-.statut-dossier{display:inline-block;padding:6px 10px;border-radius:20px;background:#e8eef7;color:#17365d;font-weight:bold}
-.type-dossier{display:inline-block;padding:5px 9px;border-radius:5px;background:#e2f1e9;color:#17613b;font-size:12px;font-weight:bold;margin-bottom:10px}
-.type-groupage{background:#fff0d9;color:#855000}
-.modal-articles{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;align-items:center;justify-content:center;padding:15px}
-.modal-contenu{background:white;width:100%;max-width:850px;max-height:85vh;overflow-y:auto;border-radius:12px;padding:22px}
-.modal-contenu table{width:100%;min-width:650px;border-collapse:collapse;margin:12px 0}
-.modal-contenu th,.modal-contenu td{padding:10px;border-bottom:1px solid #ddd;text-align:left}
-.modal-contenu th{background:#17365d;color:white}
-.btn-fermer{float:right;border:0;background:#17365d;color:white;padding:8px 14px;border-radius:6px;cursor:pointer}
-.bloc-fournisseur{border:1px solid #dce3ec;border-radius:8px;padding:12px;margin:12px 0}
-@media(max-width:600px){
- body{margin:10px}
- .dossier-infos{flex-direction:column;gap:8px}
- .filtres input,.filtres select{flex:1 1 100%;width:100%}
-}
+:root{--navy:#17365d;--blue:#3157d5;--bg:#f4f6f9;--ink:#263445;--muted:#68778b;--line:#dce3ec}
+*{box-sizing:border-box}body{font-family:Arial,sans-serif;margin:0;background:var(--bg);color:var(--ink)}
+.container{max-width:1250px;margin:auto;padding:24px 18px 40px}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:15px;flex-wrap:wrap}
+h1,h2,h3{color:var(--navy)}h1{font-size:26px;margin:0 0 6px}header p{margin:0;color:var(--muted)}
+#message{padding:12px 14px;margin:16px 0;border-radius:8px;background:#e8eef7;color:var(--navy)}
+.filtres{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0}
+.filtres input,.filtres select,.filtres button{padding:11px 12px;border:1px solid #cbd5e1;border-radius:7px;font-size:14px}
+.filtres input{flex:2;min-width:230px}.filtres select{min-width:190px}
+button{cursor:pointer}.filtres button,.btn{background:var(--navy);color:#fff;border:0;border-radius:7px;padding:10px 14px}
+.section{margin-top:24px}.section-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+.section-head h2{font-size:20px;margin:0}.count{font-size:13px;color:var(--muted)}
+#groupages,#dossiers{display:grid;grid-template-columns:1fr;gap:13px}
+.card{background:white;border:1px solid var(--line);border-radius:12px;padding:17px;box-shadow:0 2px 7px #00000009}
+.card h3{margin:0 0 12px;font-size:17px}
+.infos{display:flex;gap:9px 22px;flex-wrap:wrap;margin:10px 0 14px;font-size:14px}
+.infos span{color:#435166}.infos strong{color:#263445}
+.status{display:inline-block;padding:5px 10px;border-radius:20px;background:#e8eef7;color:var(--navy);font-weight:bold;font-size:12px}
+.group-members{margin-top:13px;padding-top:12px;border-top:1px solid var(--line)}
+.member{padding:12px;margin:9px 0;background:#f8faff;border:1px solid #e3eaf4;border-radius:8px}
+.member h4{margin:0 0 7px;color:var(--navy)}
+.member p{margin:5px 0;font-size:13px}
+.articles{width:100%;border-collapse:collapse;margin-top:8px;min-width:500px}
+.articles th,.articles td{padding:8px;border-bottom:1px solid #dce3ec;text-align:left;font-size:13px}
+.articles th{background:#eaf0f7;color:var(--navy)}
+.table-scroll{overflow-x:auto}
+.empty{padding:20px;background:white;border:1px dashed #cbd5e1;border-radius:10px;color:var(--muted)}
+.hidden{display:none}
+@media(max-width:620px){.container{padding:18px 12px}.infos{flex-direction:column;gap:7px}.filtres input,.filtres select{width:100%;min-width:100%}.section-head{align-items:flex-start;flex-direction:column}}
 </style>
 </head>
-
 <body>
 <div class="container">
-<h2>Suivi des importations</h2>
-<p>Page de consultation — accès en lecture seule</p>
-
-<div id="message">Chargement des dossiers...</div>
-
+<header><div><h1>Suivi des importations</h1><p>Page de consultation — accès en lecture seule</p></div><div id="lastUpdate" class="count"></div></header>
+<div id="message">Connexion à la base de données…</div>
 <div class="filtres">
-<input type="search" id="recherche"
-placeholder="Rechercher fournisseur, groupage, conteneur, BL, article...">
-
-<select id="filtreStatut">
-<option value="">Tous les statuts</option>
-<option value="Commandée">Commandée</option>
-<option value="En préparation">En préparation</option>
-<option value="Chargé">Chargé</option>
-<option value="En transit">En transit</option>
-<option value="Arrivé au port">Arrivé au port</option>
-<option value="Dédouanement">Dédouanement</option>
-<option value="En livraison">En livraison</option>
-<option value="Livré">Livré</option>
-<option value="Bloqué">Bloqué</option>
-<option value="Annulée">Annulée</option>
-</select>
-
+<input type="search" id="recherche" placeholder="Rechercher groupage, fournisseur, conteneur, BL, article…">
+<select id="filtreStatut"><option value="">Tous les statuts</option>
+<option>Commandée</option><option>En préparation</option><option>Chargé</option><option>En transit</option><option>Arrivé au port</option><option>Dédouanement</option><option>En livraison</option><option>Livré</option><option>Bloqué</option><option>Annulée</option></select>
 <button type="button" id="reinitialiser">Réinitialiser</button>
 </div>
-
-<div id="dossiers"></div>
-
-<div id="modalArticles" class="modal-articles">
-<div class="modal-contenu">
-<button type="button" class="btn-fermer" onclick="fermerArticles()">Fermer ✕</button>
-<h2 id="titreModal">Détails du dossier</h2>
-<div id="contenuArticles"></div>
+<section class="section" id="sectionGroupages">
+<div class="section-head"><h2>Chargements en groupage</h2><span class="count" id="countGroupages"></span></div>
+<div id="groupages"><div class="empty">Chargement des groupages…</div></div>
+</section>
+<section class="section">
+<div class="section-head"><h2>Dossiers d’importation</h2><span class="count" id="countDossiers"></span></div>
+<div id="dossiers"><div class="empty">Chargement des dossiers…</div></div>
+</section>
 </div>
-</div>
-</div>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <script>
-const SUPABASE_URL = 'https://mnyokiniupvtzesdmwit.supabase.co';
-const KEY = 'sb_publishable_-HIf7IptcZ1as_TXkn5SCQ_Fx6lPnbi';
-
-const db = window.supabase.createClient(SUPABASE_URL, KEY);
-
-let tousLesDossiers = [];
-
-function safe(value) {
-  return String(value ?? '—').replace(/[&<>"']/g, c => ({
-    '&':'&amp;',
-    '<':'&lt;',
-    '>':'&gt;',
-    '"':'&quot;',
-    "'":'&#39;'
-  })[c]);
+/* Paramètres Supabase conservés tels quels depuis votre page actuelle. */
+const SUPABASE_URL='https://mnyokiniupvtzesdmwit.supabase.co';
+const KEY='sb_publishable_-HIf7IptcZ1as_TXkn5SCQ_Fx6lPnbi';
+const db=window.supabase.createClient(SUPABASE_URL,KEY);
+const $=id=>document.getElementById(id);
+let tousLesDossiers=[], tousLesGroupages=[], liensGroupage=[], groupageDisponible=true;
+function safe(v){return String(v??'—').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function normaliser(v){return String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();}
+function obtenirArticles(s){
+ if(Array.isArray(s.articles)&&s.articles.length)return s.articles;
+ if(s.article_names||s.articleNames||s.goods)return [{reference:s.article_reference||'',name:s.article_names||s.articleNames||s.goods,quantity:s.quantity,unit:s.unit}];
+ return [];
 }
-
-function normaliser(valeur) {
-  return String(valeur ?? '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .trim()
-    .toLowerCase();
+function totalArticles(articles){const t={};articles.forEach(a=>{const u=a.unit||'Autre';t[u]=(t[u]||0)+(Number(a.quantity)||0)});return Object.entries(t).map(([u,n])=>n.toLocaleString('fr-FR')+' '+u).join(' · ');}
+function statut(s){return s||'Non renseigné';}
+function articlesHtml(s){
+ const arts=obtenirArticles(s);
+ if(!arts.length)return '<p>Aucun article détaillé.</p>';
+ return `<div class="table-scroll"><table class="articles"><thead><tr><th>Référence</th><th>Désignation</th><th>Quantité</th><th>Unité</th></tr></thead><tbody>${arts.map(a=>`<tr><td>${safe(a.reference)}</td><td>${safe(a.name||a.designation)}</td><td>${safe(a.quantity)}</td><td>${safe(a.unit)}</td></tr>`).join('')}</tbody></table></div><p><strong>Total :</strong> ${safe(totalArticles(arts)||'—')}</p>`;
 }
-
-function obtenirArticles(s) {
-  if (Array.isArray(s.articles) && s.articles.length) {
-    return s.articles;
-  }
-
-  if (typeof s.articles === 'string') {
-    try {
-      const resultat = JSON.parse(s.articles);
-      if (Array.isArray(resultat)) return resultat;
-    } catch(e) {}
-  }
-
-  if (s.article_names) {
-    return [{
-      reference: s.article_reference || '',
-      name: s.article_names,
-      quantity: s.quantity,
-      unit: s.unit
-    }];
-  }
-
-  return [];
+function rechercherDansDossier(s){
+ const arts=obtenirArticles(s);
+ return normaliser([s.reference,s.ref,s.supplier,s.container,s.bl,s.invoice,s.status,s.goods,s.article_names,s.origin_port,s.dest_port,s.transporter,...arts.map(a=>[a.reference,a.name,a.designation,a.quantity,a.unit].join(' '))].join(' '));
 }
-
-function calculerTotaux(articles) {
-  const totaux = {};
-
-  articles.forEach(a => {
-    const unite = a.unit || 'Autre';
-    totaux[unite] = (totaux[unite] || 0) +
-      (Number(a.quantity) || 0);
-  });
-
-  return Object.entries(totaux)
-    .map(([unite,total]) =>
-      total.toLocaleString('fr-FR') + ' ' + unite
-    ).join(' · ');
+function appliquerFiltres(){
+ const q=normaliser($('recherche').value), st=normaliser($('filtreStatut').value);
+ const dossiers=tousLesDossiers.filter(s=>(!q||rechercherDansDossier(s).includes(q))&&(!st||normaliser(s.status)===st));
+ const groupes=tousLesGroupages.filter(g=>{
+   const membres=liensGroupage.filter(x=>x.group_id===g.id).map(x=>tousLesDossiers.find(s=>s.id===x.shipment_id)).filter(Boolean);
+   const texte=normaliser([g.group_reference,g.transport_mode,g.transport_unit_reference,g.transporter,g.origin,g.destination,g.status,...membres.map(rechercherDansDossier)].join(' '));
+   const statutOk=!st||normaliser(g.status)===st||membres.some(s=>normaliser(s.status)===st);
+   return (!q||texte.includes(q))&&statutOk;
+ });
+ afficherGroupages(groupes);afficherDossiers(dossiers);
 }
-
-/* Transformer les lignes SQL en groupages complets */
-function organiserGroupages(lignes) {
-  const groupes = new Map();
-
-  (lignes || []).forEach(ligne => {
-    const id = ligne.group_id;
-    if (!id) return;
-
-    if (!groupes.has(id)) {
-      groupes.set(id, {
-        type: 'groupage',
-        group_id: id,
-        group_reference: ligne.group_reference,
-        transport_mode: ligne.transport_mode,
-        transport_unit_reference: ligne.transport_unit_reference,
-        transporter: ligne.transporter,
-        origin: ligne.origin,
-        destination: ligne.destination,
-        load_date: ligne.load_date,
-        status: ligne.group_status,
-        fournisseurs: []
-      });
-    }
-
-    if (ligne.shipment_id) {
-      groupes.get(id).fournisseurs.push({
-        id: ligne.shipment_id,
-        supplier: ligne.supplier,
-        reference: ligne.supplier_reference,
-        invoice: ligne.invoice,
-        container: ligne.container,
-        bl: ligne.bl,
-        status: ligne.supplier_status,
-        article_names: ligne.article_names,
-        quantity: ligne.quantity,
-        unit: ligne.unit,
-        articles: ligne.articles
-      });
-    }
-  });
-
-  return Array.from(groupes.values());
+function afficherGroupages(liste){
+ $('countGroupages').textContent=liste.length+' groupage(s)';
+ if(!groupageDisponible){$('groupages').innerHTML='<div class="empty">Les dossiers individuels sont consultables ci-dessous. Pour afficher les groupages, activez les deux vues publiques indiquées dans le fichier SQL joint.</div>';return;}
+ if(!liste.length){$('groupages').innerHTML='<div class="empty">Aucun groupage ne correspond à votre recherche.</div>';return;}
+ $('groupages').innerHTML=liste.map(g=>{
+  const membres=liensGroupage.filter(x=>x.group_id===g.id).map(x=>tousLesDossiers.find(s=>s.id===x.shipment_id)).filter(Boolean);
+  const membreHtml=membres.length?membres.map(s=>`<div class="member"><h4>${safe(s.reference||s.ref||'Dossier')} — ${safe(s.supplier||'Fournisseur non précisé')}</h4><p><strong>Facture :</strong> ${safe(s.invoice)} &nbsp; <strong>Statut dossier :</strong> ${safe(statut(s.status))}</p>${articlesHtml(s)}</div>`).join(''):'<p>Aucun dossier fournisseur associé.</p>';
+  return `<article class="card"><h3>${safe(g.group_reference||'Groupage')}</h3><div class="infos"><span><strong>Transport :</strong> ${safe(g.transport_mode)}</span><span><strong>Camion / conteneur :</strong> ${safe(g.transport_unit_reference)}</span><span><strong>Transporteur :</strong> ${safe(g.transporter)}</span><span><strong>Trajet :</strong> ${safe(g.origin)} → ${safe(g.destination)}</span><span><strong>Dossiers :</strong> ${membres.length}</span><span class="status">${safe(statut(g.status))}</span></div><div class="group-members"><strong>Dossiers fournisseurs et articles</strong>${membreHtml}</div></article>`;
+ }).join('');
 }
-
-/* Affichage des articles dans une table */
-function tableauArticles(articles) {
-  const lignes = articles.map(a => `
-    <tr>
-      <td>${safe(a.reference || '')}</td>
-      <td>${safe(a.name || '')}</td>
-      <td>${safe(a.quantity ?? '')}</td>
-      <td>${safe(a.unit || '')}</td>
-      <td>${safe(a.availability || 'Non renseigné')}</td>
-      <td>${safe(a.availableQuantity ?? 'Non renseigné')}</td>
-      <td>${safe(a.expectedAvailabilityDate || 'Non renseignée')}</td>
-      <td>${safe(a.supplierComment || 'Aucun commentaire')}</td>
-    </tr>
-  `).join('');
-
-  return `
-    <div style="overflow-x:auto">
-      <table>
-        <thead>
-          <tr>
-            <th>Référence</th>
-            <th>Désignation</th>
-            <th>Quantité</th>
-            <th>Unité</th>
-            <th>Disponibilité</th>
-            <th>Quantité disponible</th>
-            <th>Date de disponibilité</th>
-            <th>Commentaire fournisseur</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${lignes || '<tr><td colspan="8">Aucun article enregistré.</td></tr>'}
-        </tbody>
-      </table>
-    </div>
-    <p><strong>Total :</strong> ${safe(calculerTotaux(articles) || 'Aucun article')}</p>
-  `;
+function afficherDossiers(liste){
+ $('countDossiers').textContent=liste.length+' dossier(s)';
+ if(!liste.length){$('dossiers').innerHTML='<div class="empty">Aucun dossier ne correspond à votre recherche.</div>';return;}
+ $('dossiers').innerHTML=liste.map((s,i)=>{
+  const arts=obtenirArticles(s),g=liensGroupage.find(x=>x.shipment_id===s.id),grp=g&&tousLesGroupages.find(x=>x.id===g.group_id);
+  return `<article class="card"><h3>${safe(s.reference||s.ref||'Dossier')} — ${safe(s.supplier||'Fournisseur non précisé')}</h3><div class="infos"><span><strong>Conteneur :</strong> ${safe(s.container)}</span><span><strong>BL :</strong> ${safe(s.bl)}</span><span><strong>Facture :</strong> ${safe(s.invoice)}</span><span><strong>Transport :</strong> ${safe(s.mode)}</span><span><strong>Trajet :</strong> ${safe(s.origin_port||s.origin||'—')} → ${safe(s.dest_port||'—')}</span><span><strong>Groupage :</strong> ${safe(grp?.group_reference||'Non renseigné')}</span><span class="status">${safe(statut(s.status))}</span></div><p><strong>${arts.length}</strong> article(s) · ${safe(totalArticles(arts)||'Total non renseigné')}</p>${articlesHtml(s)}</article>`;
+ }).join('');
 }
-
-/* Ouvrir les détails d'un dossier individuel ou d'un groupage */
-function ouvrirArticles(index) {
-  const dossier = tousLesDossiers[index];
-  if (!dossier) return;
-
-  const contenu = document.getElementById('contenuArticles');
-
-  if (dossier.type === 'groupage') {
-    document.getElementById('titreModal').textContent =
-      'Groupage — ' + (dossier.group_reference || 'Sans référence');
-
-    contenu.innerHTML = `
-      <p><strong>Référence :</strong> ${safe(dossier.group_reference)}</p>
-      <p><strong>Transport :</strong> ${safe(dossier.transport_mode)}</p>
-      <p><strong>Unité de transport :</strong> ${safe(dossier.transport_unit_reference)}</p>
-      <p><strong>Transporteur :</strong> ${safe(dossier.transporter)}</p>
-      <p><strong>Origine :</strong> ${safe(dossier.origin)}</p>
-      <p><strong>Destination :</strong> ${safe(dossier.destination)}</p>
-      <p><strong>Date de chargement :</strong> ${safe(dossier.load_date)}</p>
-      <p><strong>Statut :</strong> ${safe(dossier.status)}</p>
-      <hr>
-      <h3>Fournisseurs du groupage (${dossier.fournisseurs.length})</h3>
-
-      ${dossier.fournisseurs.map(f => `
-        <div class="bloc-fournisseur">
-          <h3>${safe(f.supplier || 'Fournisseur non renseigné')}</h3>
-          <p><strong>Référence :</strong> ${safe(f.reference)}</p>
-          <p><strong>Facture :</strong> ${safe(f.invoice)}</p>
-          <p><strong>Conteneur :</strong> ${safe(f.container)}</p>
-          <p><strong>BL :</strong> ${safe(f.bl)}</p>
-          <p><strong>Statut :</strong> ${safe(f.status)}</p>
-          <h4>Articles</h4>
-          ${tableauArticles(obtenirArticles(f))}
-        </div>
-      `).join('')}
-    `;
-  } else {
-    const articles = obtenirArticles(dossier);
-
-    document.getElementById('titreModal').textContent =
-      'Articles du dossier — ' + (dossier.supplier || 'Sans fournisseur');
-
-    contenu.innerHTML = `
-      <p><strong>Référence :</strong> ${safe(dossier.reference)}</p>
-      <p><strong>Fournisseur :</strong> ${safe(dossier.supplier)}</p>
-      <p><strong>Facture :</strong> ${safe(dossier.invoice)}</p>
-      <p><strong>Conteneur :</strong> ${safe(dossier.container)}</p>
-      <p><strong>BL :</strong> ${safe(dossier.bl)}</p>
-      <p><strong>Statut :</strong> ${safe(dossier.status)}</p>
-      ${tableauArticles(articles)}
-    `;
-  }
-
-  document.getElementById('modalArticles').style.display = 'flex';
+async function charger(){
+ $('message').textContent='Chargement des importations depuis Supabase…';
+ const {data,error}=await db.from('shipments_public').select('*');
+ if(error){$('message').textContent='Erreur de lecture des dossiers : '+error.message;return;}
+ tousLesDossiers=data||[];
+ const groupesRes=await db.from('shipment_groups_public').select('*').order('created_at',{ascending:false});
+ const liensRes=await db.from('shipment_group_members_public').select('group_id,shipment_id');
+ if(groupesRes.error||liensRes.error){
+  console.warn('Vues publiques des groupages indisponibles',groupesRes.error||liensRes.error);
+  groupageDisponible=false;tousLesGroupages=[];liensGroupage=[];
+ }else{
+  tousLesGroupages=groupesRes.data||[];liensGroupage=liensRes.data||[];
+ }
+ $('message').textContent=`${tousLesDossiers.length} dossier(s) chargé(s) depuis Supabase${groupageDisponible?' · '+tousLesGroupages.length+' groupage(s)':''}.`;
+ $('lastUpdate').textContent='Actualisé le '+new Date().toLocaleString('fr-FR');
+ appliquerFiltres();
 }
-
-function fermerArticles() {
-  document.getElementById('modalArticles').style.display = 'none';
-}
-
-/* Recherche et filtres */
-function appliquerFiltres() {
-  const recherche = normaliser(
-    document.getElementById('recherche').value
-  );
-
-  const statut = normaliser(
-    document.getElementById('filtreStatut').value
-  );
-
-  const dossiersFiltres = tousLesDossiers
-    .map((dossier,index) => ({dossier,index}))
-    .filter(({dossier}) => {
-      let texte = '';
-
-      if (dossier.type === 'groupage') {
-        texte = [
-          dossier.group_reference,
-          dossier.transport_mode,
-          dossier.transport_unit_reference,
-          dossier.transporter,
-          dossier.origin,
-          dossier.destination,
-          dossier.status,
-          ...dossier.fournisseurs.map(f => [
-            f.supplier,f.reference,f.invoice,f.container,f.bl,f.status,
-            ...obtenirArticles(f).map(a =>
-              [a.reference,a.name,a.quantity,a.unit].join(' ')
-            )
-          ].join(' '))
-        ].join(' ');
-      } else {
-        texte = [
-          dossier.reference,
-          dossier.supplier,
-          dossier.invoice,
-          dossier.container,
-          dossier.bl,
-          dossier.status,
-          ...obtenirArticles(dossier).map(a =>
-            [a.reference,a.name,a.quantity,a.unit].join(' ')
-          )
-        ].join(' ');
-      }
-
-      const correspondRecherche =
-        normaliser(texte).includes(recherche);
-
-      let correspondStatut = true;
-
-      if (statut) {
-        if (dossier.type === 'groupage') {
-          correspondStatut =
-            normaliser(dossier.status) === statut ||
-            dossier.fournisseurs.some(f =>
-              normaliser(f.status) === statut
-            );
-        } else {
-          correspondStatut = normaliser(dossier.status) === statut;
-        }
-      }
-
-      return correspondRecherche && correspondStatut;
-    });
-
-  afficherDossiers(dossiersFiltres);
-}
-
-/* Affichage des cartes */
-function afficherDossiers(liste) {
-  const zone = document.getElementById('dossiers');
-
-  if (!liste.length) {
-    zone.innerHTML = '<p>Aucun dossier ne correspond à votre recherche.</p>';
-    return;
-  }
-
-  zone.innerHTML = liste.map(({dossier:s,index}) => {
-    if (s.type === 'groupage') {
-      const nombre = s.fournisseurs.length;
-      const totalArticles = s.fournisseurs.reduce(
-        (total,f) => total + obtenirArticles(f).length, 0
-      );
-
-      return `
-        <div class="dossier-card">
-          <span class="type-dossier type-groupage">CHARGEMENT EN GROUPAGE</span>
-          <h3>${safe(s.group_reference || 'Groupage sans référence')}</h3>
-
-          <div class="dossier-infos">
-            <span><strong>Transport :</strong> ${safe(s.transport_mode)}</span>
-            <span><strong>Unité :</strong> ${safe(s.transport_unit_reference)}</span>
-            <span><strong>Transporteur :</strong> ${safe(s.transporter)}</span>
-            <span><strong>Origine :</strong> ${safe(s.origin)}</span>
-            <span><strong>Destination :</strong> ${safe(s.destination)}</span>
-            <span><strong>Chargement :</strong> ${safe(s.load_date)}</span>
-            <span class="statut-dossier">${safe(s.status)}</span>
-          </div>
-
-          <p><strong>${nombre}</strong> fournisseur(s) ·
-          <strong>${totalArticles}</strong> article(s)</p>
-
-          <button type="button" class="btn-articles"
-            onclick="ouvrirArticles(${index})">
-            Voir les fournisseurs et articles
-          </button>
-        </div>
-      `;
-    }
-
-    const articles = obtenirArticles(s);
-
-    return `
-      <div class="dossier-card">
-        <span class="type-dossier">CHARGEMENT INDIVIDUEL</span>
-        <h3>${safe(s.reference || 'Dossier')} — ${safe(s.supplier)}</h3>
-
-        <div class="dossier-infos">
-          <span><strong>Facture :</strong> ${safe(s.invoice)}</span>
-          <span><strong>Conteneur :</strong> ${safe(s.container)}</span>
-          <span><strong>BL :</strong> ${safe(s.bl)}</span>
-          <span class="statut-dossier">${safe(s.status)}</span>
-        </div>
-
-        <p><strong>${articles.length}</strong> article(s)
+$('recherche').addEventListener('input',appliquerFiltres);
+$('filtreStatut').addEventListener('change',appliquerFiltres);
+$('reinitialiser').addEventListener('click',()=>{$('recherche').value='';$('filtreStatut').value='';appliquerFiltres();});
+charger();
+</script>
+</body>
+</html>
