@@ -4,318 +4,453 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#17365d">
 <title>Consultation des importations</title>
 
 <style>
-*{box-sizing:border-box}
-body{font-family:Arial,sans-serif;margin:0;background:#f3f6fa;color:#263445}
-header{background:#17365d;color:white;padding:22px 16px}
-.container{max-width:1200px;margin:auto;padding:20px}
-h1{font-size:23px;margin:0 0 6px}
-header p{margin:0;color:#dce7f5;font-size:14px}
-.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}
-input,select{padding:12px;border:1px solid #ccd5e0;border-radius:8px;font-size:14px;background:white}
-input{flex:1;min-width:220px}
-select{min-width:190px}
-.section-title{font-size:19px;color:#17365d;margin:28px 0 12px}
-.card{background:white;border:1px solid #e0e6ed;border-radius:12px;padding:17px;margin-bottom:13px;box-shadow:0 2px 7px #17365d0b}
-.card-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
-.card h3{font-size:17px;margin:0;color:#17365d}
-.badge{display:inline-block;padding:6px 10px;border-radius:20px;background:#e8eef7;color:#17365d;font-size:12px;font-weight:bold}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
-.field{font-size:13px;color:#68778a;overflow-wrap:anywhere}
-.field strong{display:block;color:#263445;font-size:14px;margin-top:4px}
-.subcard{background:#f7f9fc;border:1px solid #e4eaf1;border-radius:9px;padding:13px;margin-top:10px}
-.subcard h4{margin:0 0 10px;color:#17365d;font-size:14px}
-.article{font-size:13px;margin-top:7px;color:#34465b}
-.surestaries{margin-top:13px;padding:12px;border-radius:8px;background:#fff8e8;border:1px solid #f0dfb5;font-size:13px}
-.surestaries strong{color:#815b12}
-.empty,.loading,.error{padding:25px;text-align:center;background:white;border-radius:10px;color:#68778a}
-.error{color:#a52828}
-.small{font-size:12px;color:#77869a;margin-top:12px}
-button{border:0;background:#17365d;color:white;padding:10px 15px;border-radius:8px;cursor:pointer}
-button:hover{background:#244c7b}
-@media(max-width:600px){.container{padding:13px}.card{padding:13px}h1{font-size:20px}}
+body{font-family:Arial,sans-serif;margin:20px;background:#f4f6f9;color:#263445}
+h2{color:#17365d}
+.container{max-width:1200px;margin:auto}
+.table-wrap{overflow-x:auto;background:white;border-radius:10px;padding:12px}
+table{width:100%;border-collapse:collapse;min-width:850px}
+th,td{padding:12px;border-bottom:1px solid #ddd;text-align:left}
+th{background:#17365d;color:white}
+tr:hover{background:#f1f5fa}
+#message{padding:12px;margin:12px 0}
+  .filtres {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 15px 0;
+}
+
+.filtres input,
+.filtres select,
+.filtres button {
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.filtres input {
+  flex: 2;
+  min-width: 220px;
+}
+
+.filtres select {
+  flex: 1;
+  min-width: 180px;
+}
+
+.filtres button {
+  background: #17365d;
+  color: white;
+  cursor: pointer;
+}
+  /* Cartes des dossiers */
+#dossiers {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.dossier-card {
+  background: white;
+  border: 1px solid #dce3ec;
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: 0 2px 7px rgba(0,0,0,0.06);
+}
+
+.dossier-card h3 {
+  color: #17365d;
+  margin: 0 0 12px;
+}
+
+.dossier-infos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 24px;
+  margin-bottom: 14px;
+}
+
+.statut-dossier {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 20px;
+  background: #e8eef7;
+  color: #17365d;
+  font-weight: bold;
+}
+
+.btn-articles {
+  background: #17365d;
+  color: white;
+  border: 0;
+  border-radius: 7px;
+  padding: 10px 16px;
+  cursor: pointer;
+}
+
+.modal-articles {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  padding: 15px;
+}
+
+.modal-contenu {
+  background: white;
+  width: 100%;
+  max-width: 750px;
+  max-height: 85vh;
+  overflow-y: auto;
+  border-radius: 12px;
+  padding: 22px;
+}
+
+.modal-contenu table {
+  width: 100%;
+  min-width: 0;
+  border-collapse: collapse;
+}
+
+.modal-contenu th,
+.modal-contenu td {
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+.btn-fermer {
+  float: right;
+  border: 0;
+  background: #17365d;
+  color: white;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+@media (max-width: 600px) {
+  .dossier-infos {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+  /* Filtres horizontaux */
+.filtres {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 10px;
+  margin: 15px 0;
+}
+
+.filtres input {
+  flex: 2 1 350px;
+  min-width: 0;
+  max-width: 350px;
+  padding: 9px 12px;
+}
+
+.filtres select {
+  flex: 1 1 220px;
+  min-width: 170px;
+  max-width: 220px;
+  padding: 9px 12px;
+}
+
+.filtres button {
+  padding: 9px 14px;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .filtres {
+    flex-wrap: wrap;
+  }
+
+  .filtres input,
+  .filtres select {
+    flex: 1 1 100%;
+    max-width: 100%;
+    width: 100%;
+  }
+}
 </style>
 </head>
-
 <body>
-<header>
-  <div class="container">
-    <h1>Consultation des importations</h1>
-    <p>Suivi des chargements individuels et des groupages</p>
+<div class="container">
+<h2>Suivi des importations</h2>
+<p>Page de consultation — accès en lecture seule</p>
+<div id="message">Chargement des dossiers...</div>
+  <div class="filtres">
+  <input
+    type="search"
+    id="recherche"
+    placeholder="Rechercher fournisseur, conteneur, BL, article..."
+  >
+
+<select id="filtreStatut">
+    <option value="">Tous les statuts</option>
+    <option value="Commandée">Commandée</option>
+    <option value="En préparation">En préparation</option>
+    <option value="Chargé">Chargé</option>
+    <option value="En transit">En transit</option>
+    <option value="Arrivé au port">Arrivé au port</option>
+    <option value="Dédouanement">Dédouanement</option>
+    <option value="En livraison">En livraison</option>
+    <option value="Livré">Livré</option>
+    <option value="Bloqué">Bloqué</option>
+    <option value="Annulée">Annulée</option>
+</select>
+
+  <button type="button" id="reinitialiser">Réinitialiser</button>
+    </div>
+<div id="dossiers"></div>
+    <div id="modalArticles" class="modal-articles">
+  <div class="modal-contenu">
+    <button type="button" class="btn-fermer" onclick="fermerArticles()">Fermer ✕</button>
+    <h2 id="titreModal">Articles du dossier</h2>
+    <div id="contenuArticles"></div>
   </div>
-</header>
-
-<main class="container">
-  <div class="toolbar">
-    <input id="search" type="search" placeholder="Rechercher fournisseur, article, BL, conteneur...">
-    <select id="statusFilter">
-      <option value="">Tous les statuts</option>
-      <option>Commandée</option>
-      <option>En préparation</option>
-      <option>Chargé</option>
-      <option>En transit</option>
-      <option>Arrivé au port</option>
-      <option>Dédouanement</option>
-      <option>En livraison</option>
-      <option>Livré</option>
-      <option>Bloqué</option>
-      <option>Annulée</option>
-    </select>
-    <button id="refreshBtn" type="button">Actualiser</button>
+</div>
   </div>
-
-  <div id="loading" class="loading">Chargement des données...</div>
-  <div id="error" class="error" hidden></div>
-
-  <section>
-    <h2 class="section-title">Chargements individuels</h2>
-    <div id="individualList"></div>
-  </section>
-
-  <section>
-    <h2 class="section-title">Chargements en groupage</h2>
-    <div id="groupList"></div>
-  </section>
-
-  <p class="small">Page de consultation en lecture seule.</p>
-</main>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL = 'https://mnyokiniupvtzesdmwit.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_-HIf7IptcZ1as_TXkn5SCQ_Fx6lPnbi';
+const KEY = 'sb_publishable_-HIf7IptcZ1as_TXkn5SCQ_Fx6lPnbi';
 
-const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const db = window.supabase.createClient(SUPABASE_URL, KEY);
 
-let shipments = [];
-let groups = [];
-let memberships = [];
+function safe(value) {
+  return String(value ?? '—').replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;',
+    '"':'&quot;',"'":'&#39;'
+  })[c]);
+}
+let tousLesDossiers = [];
 
-const $ = id => document.getElementById(id);
-
-function esc(value){
-  return String(value ?? '').replace(/[&<>"']/g, c => ({
-    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-  }[c]));
+function normaliser(valeur) {
+  return String(valeur ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase();
 }
 
-function valueOrDash(value){
-  return value !== null && value !== undefined && value !== ''
-    ? esc(value) : '—';
-}
-
-function formatDate(value){
-  if(!value) return '—';
-  const d = new Date(value + (String(value).length === 10 ? 'T00:00:00' : ''));
-  return Number.isNaN(d.getTime()) ? esc(value) :
-    d.toLocaleDateString('fr-FR');
-}
-
-function statusBadge(status){
-  return `<span class="badge">${valueOrDash(status)}</span>`;
-}
-
-function articleDetails(row){
-  let result = '';
-
-  if(row.article_names){
-    result += `<div class="article"><strong>Articles :</strong> ${esc(row.article_names)}</div>`;
+function obtenirArticles(s) {
+  if (Array.isArray(s.articles) && s.articles.length) {
+    return s.articles;
   }
 
-  if(row.article_reference){
-    result += `<div class="article"><strong>Références articles :</strong> ${esc(row.article_reference)}</div>`;
+  if (s.article_names) {
+    return [{
+      reference: '',
+      name: s.article_names,
+      quantity: s.quantity,
+      unit: s.unit
+    }];
   }
 
-  if(Array.isArray(row.articles) && row.articles.length){
-    result += row.articles.map(a => {
-      if(typeof a === 'string') return `<div class="article">• ${esc(a)}</div>`;
-      const name = a.name || a.article_name || a.articleName || a.designation || a.product || '';
-      const ref = a.reference || a.article_reference || a.articleReference || '';
-      const qty = a.quantity ?? a.quantite ?? '';
-      const unit = a.unit || a.unite || '';
-      const detail = [name, ref ? 'Réf. ' + ref : '', qty !== '' ? qty + ' ' + unit : ''].filter(Boolean).join(' — ');
-      return detail ? `<div class="article">• ${esc(detail)}</div>` : '';
-    }).join('');
-  }
-
-  return result || '<div class="article">Détails des articles non renseignés</div>';
+  return [];
 }
 
-function individualSurestaries(row){
-  const start = row.surestaries_start_date;
-  const free = row.free_days;
-  const rate = row.daily_rate;
+function calculerTotaux(articles) {
+  const totaux = {};
 
-  if(!start || free === null || free === undefined || free === '' ||
-     rate === null || rate === undefined || rate === '') return '';
-
-  const end = row.terminal_out_date || new Date().toISOString().slice(0,10);
-  const startMs = Date.parse(start + 'T00:00:00Z');
-  const endMs = Date.parse(end + 'T00:00:00Z');
-
-  if(!Number.isFinite(startMs) || !Number.isFinite(endMs)) return '';
-
-  const totalDays = Math.max(0, Math.round((endMs - startMs) / 86400000) + 1);
-  const freeDays = Math.max(0, Math.floor(Number(free)));
-  const chargeableDays = Math.max(0, totalDays - freeDays);
-  const count = Math.max(1, Math.floor(Number(row.container_count) || 1));
-  const amount = chargeableDays * Number(rate) * count;
-  const currency = row.currency || 'MAD';
-
-  return `
-    <div class="surestaries">
-      <strong>Surestaries — chargement individuel</strong><br>
-      Début du calcul : ${formatDate(start)}<br>
-      Jours écoulés : ${totalDays}<br>
-      Jours gratuits : ${freeDays}<br>
-      Jours facturables : ${chargeableDays}<br>
-      Nombre de conteneurs : ${count}<br>
-      Tarif journalier : ${esc(rate)} ${esc(currency)}<br>
-      <strong>Montant estimé : ${amount.toLocaleString('fr-FR')} ${esc(currency)}</strong>
-      ${row.terminal_out_date ? '<br>Sortie du terminal : ' + formatDate(row.terminal_out_date) : '<br>Calcul en cours'}
-    </div>`;
-}
-
-function renderIndividual(row){
-  return `
-    <article class="card">
-      <div class="card-head">
-        <h3>${valueOrDash(row.reference || 'Chargement individuel')}</h3>
-        ${statusBadge(row.status)}
-      </div>
-      <div class="grid">
-        <div class="field">Fournisseur<strong>${valueOrDash(row.supplier)}</strong></div>
-        <div class="field">N° facture<strong>${valueOrDash(row.invoice)}</strong></div>
-        <div class="field">Connaissement BL<strong>${valueOrDash(row.bl)}</strong></div>
-        <div class="field">Conteneur<strong>${valueOrDash(row.container)}</strong></div>
-        <div class="field">Quantité<strong>${valueOrDash(row.quantity)} ${valueOrDash(row.unit)}</strong></div>
-      </div>
-      ${articleDetails(row)}
-      ${individualSurestaries(row)}
-    </article>`;
-}
-
-function renderGroup(group){
-  const groupMembers = memberships.filter(m => String(m.group_id) === String(group.id));
-  const memberRows = groupMembers
-    .map(m => shipments.find(s => String(s.id) === String(m.shipment_id)))
-    .filter(Boolean);
-
-  const suppliersHtml = memberRows.length
-    ? memberRows.map(row => `
-      <div class="subcard">
-        <h4>Fournisseur : ${valueOrDash(row.supplier)}</h4>
-        <div class="grid">
-          <div class="field">N° facture<strong>${valueOrDash(row.invoice)}</strong></div>
-          <div class="field">BL<strong>${valueOrDash(row.bl)}</strong></div>
-          <div class="field">Conteneur<strong>${valueOrDash(row.container)}</strong></div>
-          <div class="field">Quantité<strong>${valueOrDash(row.quantity)} ${valueOrDash(row.unit)}</strong></div>
-          <div class="field">Statut<strong>${valueOrDash(row.status)}</strong></div>
-        </div>
-        ${articleDetails(row)}
-      </div>
-    `).join('')
-    : '<div class="empty">Aucun dossier fournisseur associé à ce groupage.</div>';
-
-  return `
-    <article class="card">
-      <div class="card-head">
-        <h3>${valueOrDash(group.group_reference || 'Groupage')}</h3>
-        ${statusBadge(group.status)}
-      </div>
-      <div class="grid">
-        <div class="field">Mode de transport<strong>${valueOrDash(group.transport_mode)}</strong></div>
-        <div class="field">Référence transport / conteneur<strong>${valueOrDash(group.transport_unit_reference)}</strong></div>
-        <div class="field">Transporteur<strong>${valueOrDash(group.transporter)}</strong></div>
-        <div class="field">Origine<strong>${valueOrDash(group.origin)}</strong></div>
-        <div class="field">Destination<strong>${valueOrDash(group.destination)}</strong></div>
-        <div class="field">Date de chargement<strong>${formatDate(group.load_date)}</strong></div>
-      </div>
-      <h4 style="color:#17365d;margin:18px 0 8px">Dossiers des fournisseurs</h4>
-      ${suppliersHtml}
-    </article>`;
-}
-
-function matchesSearch(row, query){
-  if(!query) return true;
-  return JSON.stringify(row).toLowerCase().includes(query);
-}
-
-function render(){
-  const query = $('search').value.trim().toLowerCase();
-  const status = $('statusFilter').value;
-
-  const groupedShipmentIds = new Set(
-    memberships.map(m => String(m.shipment_id))
-  );
-
-  const individualRows = shipments.filter(row =>
-    !groupedShipmentIds.has(String(row.id)) &&
-    (!status || row.status === status) &&
-    matchesSearch(row, query)
-  );
-
-  const groupRows = groups.filter(group => {
-    if(status && group.status !== status) return false;
-    if(!query) return true;
-
-    const memberRows = memberships
-      .filter(m => String(m.group_id) === String(group.id))
-      .map(m => shipments.find(s => String(s.id) === String(m.shipment_id)))
-      .filter(Boolean);
-
-    return matchesSearch(group, query) ||
-      memberRows.some(row => matchesSearch(row, query));
+  articles.forEach(a => {
+    const unite = a.unit || 'Autre';
+    totaux[unite] = (totaux[unite] || 0) +
+      (Number(a.quantity) || 0);
   });
 
-  $('individualList').innerHTML = individualRows.length
-    ? individualRows.map(renderIndividual).join('')
-    : '<div class="empty">Aucun chargement individuel trouvé.</div>';
-
-  $('groupList').innerHTML = groupRows.length
-    ? groupRows.map(renderGroup).join('')
-    : '<div class="empty">Aucun groupage trouvé.</div>';
+  return Object.entries(totaux)
+    .map(([unite, total]) =>
+      total.toLocaleString('fr-FR') + ' ' + unite
+    )
+    .join(' · ');
 }
 
-async function loadData(){
-  $('loading').hidden = false;
-  $('error').hidden = true;
 
-  try{
-    const [shipmentResult, groupResult, memberResult] = await Promise.all([
-      db.from('shipment_consultation_public').select('*'),
-      db.from('shipment_groups_public').select('*'),
-      db.from('shipment_group_members_public').select('*')
-    ]);
+function ouvrirArticles(index) {
+  const dossier = tousLesDossiers[index];
+  if (!dossier) return;
 
-    if(shipmentResult.error) throw shipmentResult.error;
-    if(groupResult.error) throw groupResult.error;
-    if(memberResult.error) throw memberResult.error;
+  const articles = obtenirArticles(dossier);
 
-    shipments = shipmentResult.data || [];
-    groups = groupResult.data || [];
-    memberships = memberResult.data || [];
+  document.getElementById('titreModal').textContent =
+    'Articles du dossier — ' + (dossier.supplier || 'Sans fournisseur');
 
-    render();
-  }catch(error){
-    console.error(error);
-    $('error').hidden = false;
-    $('error').textContent =
-      'Impossible de charger les données. Vérifie les vues publiques et les autorisations Supabase. Détail : ' +
-      (error.message || 'Erreur inconnue');
-  }finally{
-    $('loading').hidden = true;
+  const lignes = articles.map(a => `
+    <tr>
+      <td>${safe(a.reference || '')}</td>
+      <td>${safe(a.name || '')}</td>
+      <td>${safe(a.quantity ?? '')}</td>
+      <td>${safe(a.unit || '')}</td>
+      <td>${safe(a.availability || 'Non renseigné')}</td>
+      <td>${safe(a.availableQuantity ?? 'Non renseigné')}</td>
+      <td>${safe(a.expectedAvailabilityDate || 'Non renseignée')}</td>
+      <td>${safe(a.supplierComment || 'Aucun commentaire')}</td>
+    </tr>
+  `).join('');
+
+  document.getElementById('contenuArticles').innerHTML = `
+    <p><strong>Fournisseur :</strong> ${safe(dossier.supplier)}</p>
+    <p><strong>Conteneur :</strong> ${safe(dossier.container)}</p>
+    <p><strong>BL :</strong> ${safe(dossier.bl)}</p>
+    <p><strong>Arrivée prévue :</strong> ${safe(dossier.eta)}</p>
+    <p><strong>Statut :</strong> ${safe(dossier.status)}</p>
+
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>Référence</th>
+            <th>Désignation</th>
+            <th>Quantité commandée</th>
+            <th>Unité</th>
+            <th>Disponibilité</th>
+            <th>Quantité disponible</th>
+            <th>Date de disponibilité</th>
+            <th>Commentaire fournisseur</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${lignes || '<tr><td colspan="8">Aucun article enregistré.</td></tr>'}
+        </tbody>
+      </table>
+    </div>
+
+    <p class="total-dossier">
+      Total : ${safe(calculerTotaux(articles) || 'Aucun article')}
+    </p>
+  `;
+
+  document.getElementById('modalArticles').style.display = 'flex';
+}
+function fermerArticles() {
+  document.getElementById('modalArticles').style.display = 'none';
+}
+
+function appliquerFiltres() {
+  const recherche = normaliser(
+    document.getElementById('recherche').value
+  );
+
+  const statut = normaliser(
+    document.getElementById('filtreStatut').value
+  );
+
+  const dossiersFiltres = tousLesDossiers
+    .map((dossier, index) => ({ dossier, index }))
+    .filter(({ dossier }) => {
+      const articles = obtenirArticles(dossier);
+
+      const texte = normaliser([
+        dossier.supplier,
+        dossier.container,
+        dossier.bl,
+        dossier.eta,
+        dossier.status,
+        ...articles.map(a =>
+          [a.reference, a.name, a.quantity, a.unit].join(' ')
+        )
+      ].join(' '));
+
+      const correspondRecherche = texte.includes(recherche);
+      const correspondStatut =
+        !statut || normaliser(dossier.status) === statut;
+
+      return correspondRecherche && correspondStatut;
+    });
+
+  afficherDossiers(dossiersFiltres);
+}
+
+function afficherDossiers(liste) {
+  const zone = document.getElementById('dossiers');
+
+  if (!liste.length) {
+    zone.innerHTML = '<p>Aucun dossier ne correspond à votre recherche.</p>';
+    return;
   }
+
+  zone.innerHTML = liste.map(({ dossier: s, index }) => {
+    const articles = obtenirArticles(s);
+    const total = calculerTotaux(articles);
+
+    return `
+      <div class="dossier-card">
+        <h3>Dossier ${index + 1} — ${safe(s.supplier)}</h3>
+
+        <div class="dossier-infos">
+          <span><strong>Conteneur :</strong> ${safe(s.container)}</span>
+          <span><strong>BL :</strong> ${safe(s.bl)}</span>
+          <span><strong>Arrivée prévue :</strong> ${safe(s.eta)}</span>
+          <span class="statut-dossier">${safe(s.status)}</span>
+        </div>
+
+        <p>
+          <strong>${articles.length}</strong>
+          article(s) enregistré(s)
+          ${total ? ' · ' + safe(total) : ''}
+        </p>
+
+        <button
+          type="button"
+          class="btn-articles"
+          onclick="ouvrirArticles(${index})">
+          Voir les articles
+        </button>
+      </div>
+    `;
+  }).join('');
 }
 
-$('search').addEventListener('input', render);
-$('statusFilter').addEventListener('change', render);
-$('refreshBtn').addEventListener('click', loadData);
+async function chargerDossiers() {
+  const message = document.getElementById('message');
 
-loadData();
+  message.textContent = 'Chargement des dossiers...';
+
+  const { data, error } = await db
+    .from('shipments_public')
+    .select('supplier,container,bl,article_names,quantity,unit,eta,status,articles')
+    .order('eta', { ascending: true });
+
+  if (error) {
+    message.textContent = 'Erreur de chargement : ' + error.message;
+    return;
+  }
+
+  tousLesDossiers = data || [];
+
+  if (!tousLesDossiers.length) {
+    message.textContent = 'Aucun dossier disponible.';
+    document.getElementById('dossiers').innerHTML = '';
+    return;
+  }
+
+  message.textContent =
+    tousLesDossiers.length + ' dossier(s) disponible(s).';
+
+  appliquerFiltres();
+}
+document.getElementById('recherche').addEventListener('input', appliquerFiltres);
+
+document.getElementById('filtreStatut').addEventListener('change', appliquerFiltres);
+
+document.getElementById('reinitialiser').addEventListener('click', () => {
+  document.getElementById('recherche').value = '';
+  document.getElementById('filtreStatut').value = '';
+  appliquerFiltres();
+});
+chargerDossiers();
 </script>
 </body>
 </html>
