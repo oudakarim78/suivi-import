@@ -62,7 +62,7 @@ body.consultant .table-wrap table{min-width:680px}
     </div>
   </header>
 
-  <div class="hero"><div><h2>Vue d'ensemble</h2><p>Suivez l'avancement de vos importations de la commande à la livraison.</p></div><div class="updated" id="lastUpdated">Données enregistrées dans ce navigateur</div></div>
+  <div class="hero"><div><h2>Vue d'ensemble</h2><p>Suivez l'avancement de vos chargements, de la commande à la livraison.</p></div><div class="updated" id="lastUpdated">Données enregistrées dans ce navigateur</div></div>
   <section class="metrics" aria-label="Indicateurs de suivi">
     <div class="metric metric-clickable" data-metric="active" role="button" tabindex="0" aria-label="Afficher les chargements concernés"><div class="metric-top">Chargements actifs <span class="metric-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7.5 12 3l9 4.5-9 4.5-9-4.5Z"/><path d="M3 12l9 4.5 9-4.5M12 12v9"/></svg></span></div><div class="metric-value" id="metricActive" data-metric="active">0</div><div class="metric-foot">Non encore livrés</div></div>
     <div class="metric metric-clickable" data-metric="transit" role="button" tabindex="0" aria-label="Afficher les chargements concernés"><div class="metric-top">En transit <span class="metric-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h11v11H3zM14 10h4l3 3v4h-7z"/><circle cx="7.5" cy="18" r="1.8"/><circle cx="17.5" cy="18" r="1.8"/></svg></span></div><div class="metric-value" id="metricTransit" data-metric="transit">0</div><div class="metric-foot">Chargés ou en route</div></div>
@@ -81,11 +81,20 @@ body.consultant .table-wrap table{min-width:680px}
     <div class="list-head"><div><h3>Mes chargements</h3><div class="count" id="listCount">0 chargement</div></div><div class="tools"><div class="searchbox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4 4"/></svg><input class="field-control" id="search" placeholder="Référence, fournisseur, article, conteneur…" aria-label="Rechercher" /></div><select class="field-control" id="statusFilter" aria-label="Filtrer par statut"><option value="">Tous les statuts</option></select><select class="field-control" id="sortFilter" aria-label="Trier"><option value="eta">Trier : arrivée prévue</option><option value="newest">Plus récents</option><option value="supplier">Fournisseur A–Z</option></select></div></div>
     <div class="filters"><select class="field-control" id="modeFilter" aria-label="Filtrer par transport"><option value="">Tous les transports</option><option>Maritime</option><option>Routier</option><option>Aérien</option><option>Autre</option></select><button class="btn small" id="resetFilters">Réinitialiser les filtres</button></div>
     <div class="table-wrap"><table><thead id="shipmentHead"><tr><th>Fournisseur</th><th>Référence article</th><th>Quantité</th><th>BL / Conteneur</th><th>Statut</th></tr></thead><tbody id="shipmentRows"></tbody></table></div>
-    <div class="empty" id="emptyState"><div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 7.5 12 3l9 4.5-9 4.5-9-4.5Z"/><path d="M3 12l9 4.5 9-4.5M3 16.5 12 21l9-4.5M12 12v9"/></svg></div><strong>Aucun chargement pour le moment</strong>Ajoutez votre première importation pour commencer le suivi.<br><button class="btn primary" style="margin-top:15px" id="emptyAdd">+ Ajouter un chargement</button></div>
+    <div class="empty" id="emptyState"><div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 7.5 12 3l9 4.5-9 4.5-9-4.5Z"/><path d="M3 12l9 4.5 9-4.5M3 16.5 12 21l9-4.5M12 12v9"/></svg></div><strong>Aucun chargement pour le moment</strong>Ajoutez votre premier chargement pour commencer le suivi.<br><button class="btn primary" style="margin-top:15px" id="emptyAdd">+ Ajouter un chargement</button></div>
     <div class="table-footer"><span id="footerCount">Affichage de 0 chargement</span><span>Les retards et surestaries sont recalculés à chaque ouverture de l’application.</span></div>
   </section>
   <section class="main-card" id="groupageSection" style="margin-top:18px">
-    <div class="list-head"><div><h3>Groupage transport</h3><div class="count">Regrouper plusieurs dossiers fournisseurs dans un même camion ou conteneur</div></div><div class="tools"><button class="btn" id="exportGroupsExcel" type="button">Exporter les groupages (Excel)</button></div></div>
+    <div class="list-head">
+      <div>
+        <h3>Groupage transport</h3>
+        <div class="count">Rattacher plusieurs chargements existants à un même camion ou conteneur</div>
+      </div>
+      <div class="tools">
+        <button class="btn" id="exportGroupsExcel" type="button">Exporter les groupages (Excel)</button>
+      </div>
+    </div>
+
     <div id="groupageFormPanel" style="padding:18px 22px" hidden>
       <div class="formgrid" style="margin-bottom:14px">
         <div class="form-field"><label for="gMode">Mode de transport</label><select id="gMode"><option>Routier</option><option>Maritime</option></select></div>
@@ -105,45 +114,41 @@ body.consultant .table-wrap table{min-width:680px}
         <div class="form-field"><label for="gDailyRate">Tarif journalier / conteneur</label><input id="gDailyRate" type="number" min="0" step="0.01" placeholder="Ex. 500"></div>
         <div class="form-field"><label for="gContainerCount">Nombre de conteneurs</label><input id="gContainerCount" type="number" min="1" step="1" value="1"></div>
         <div class="form-field"><label for="gCurrency">Devise</label><select id="gCurrency"><option>MAD</option><option>EUR</option><option>USD</option></select></div>
-        <div class="calc-preview" id="groupSurestariesPreview" aria-live="polite"><div><div class="calc-label">Jours facturables estimés</div><div class="calc-value" id="gPreviewChargeDays">—</div></div><div><div class="calc-label">Coût estimé</div><div class="calc-value" id="gPreviewChargeAmount">—</div></div><div><div class="calc-label">Calcul jusqu’au</div><div class="calc-value" id="gPreviewUntil">—</div></div><div class="calc-note">Même formule que le chargement individuel : jours calendaires inclusifs, moins la franchise, multipliés par le tarif journalier et le nombre de conteneurs.</div></div>
-      
-     <div class="form-field full">
-  <label for="gNotes">Notes</label>
-  <textarea id="gNotes" placeholder="Informations communes au groupage"></textarea>
-</div>
-</div>
+        <div class="calc-preview" id="groupSurestariesPreview" aria-live="polite">
+          <div><div class="calc-label">Jours facturables estimés</div><div class="calc-value" id="gPreviewChargeDays">—</div></div>
+          <div><div class="calc-label">Coût estimé</div><div class="calc-value" id="gPreviewChargeAmount">—</div></div>
+          <div><div class="calc-label">Calcul jusqu’au</div><div class="calc-value" id="gPreviewUntil">—</div></div>
+          <div class="calc-note">Même formule que le chargement individuel : jours calendaires inclusifs, moins la franchise, multipliés par le tarif journalier et le nombre de conteneurs.</div>
+        </div>
+        <div class="form-field full"><label for="gNotes">Notes</label><textarea id="gNotes" placeholder="Informations communes au groupage"></textarea></div>
+      </div>
 
-<div class="section-title">Ajouter des dossiers d'importation existants</div>
+      <div class="section-title">Sélectionner les chargements existants</div>
+      <p class="hint">Cochez les chargements déjà enregistrés à rattacher au groupage. Aucun nouveau chargement ne sera créé. Si un chargement appartient déjà à un autre groupage, le cocher le transférera vers celui-ci.</p>
+      <div id="existingShipmentsPicker" style="border:1px solid #dbe3ef;border-radius:8px;padding:12px;margin:10px 0 16px">
+        <p class="hint">Recherche des chargements disponibles…</p>
+      </div>
 
-<p class="hint">
-  Sélectionnez les dossiers déjà enregistrés qui doivent être rattachés à ce groupage.
-  Ils ne seront ni recréés ni modifiés.
-</p>
+      <div id="groupageMessage" class="hint" role="status" aria-live="polite" style="margin:8px 0 12px"></div>
+      <div class="foot-right" style="padding-bottom:4px">
+        <button class="btn" id="cancelGroupageBtn" type="button">Annuler</button>
+        <button class="btn primary" id="createGroupBtn" type="button">Créer le groupage</button>
+      </div>
+    </div>
 
-<div id="existingShipmentsPicker"
-     style="border:1px solid #dbe3ef;border-radius:8px;padding:12px;margin:10px 0 16px">
-  <p class="hint">Chargement des dossiers disponibles...</p>
-</div>
-
-<div class="section-title">Fournisseurs de ce groupage</div>
-<p class="hint">
-  Ajoutez chaque fournisseur, son numéro de facture et ses articles.
-  Un dossier distinct sera créé pour chaque fournisseur et relié automatiquement au groupage.
-</p>
-
-<div id="newGroupSuppliers" style="display:grid;gap:12px;margin:10px 0 14px"></div>
-
-<button class="btn small" type="button" id="addGroupSupplierBtn">
-  + Ajouter un fournisseur
-</button>
-    <div class="table-wrap"><table><thead><tr><th>Référence groupage</th><th>Transport</th><th>Camion / conteneur</th><th>Trajet</th><th>Dossiers associés</th><th>Surestaries estimées</th><th>Statut</th><th>Actions</th></tr></thead><tbody id="groupageRows"><tr><td colspan="8">Aucun groupage chargé.</td></tr></tbody></table></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Référence groupage</th><th>Transport</th><th>Camion / conteneur</th><th>Trajet</th><th>Chargements associés</th><th>Surestaries estimées</th><th>Statut</th><th>Actions</th></tr></thead>
+        <tbody id="groupageRows"><tr><td colspan="8">Aucun groupage chargé.</td></tr></tbody>
+      </table>
+    </div>
   </section>
   <div class="footer-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Données hébergées dans Supabase. Les droits sont contrôlés par Supabase (RLS), pas uniquement par l’interface.</div>
 </div>
 
 <div class="overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
   <form class="modal" id="shipmentForm">
-    <div class="modal-head"><div><h3 id="modalTitle">Nouveau chargement</h3><p>Renseignez les informations principales de l'importation.</p></div><button class="close" type="button" id="closeModal" aria-label="Fermer">×</button></div>
+    <div class="modal-head"><div><h3 id="modalTitle">Nouveau chargement</h3><p>Renseignez les informations principales du chargement.</p></div><button class="close" type="button" id="closeModal" aria-label="Fermer">×</button></div>
     <div class="formbody">
       <div class="section-title">Identification</div>
       <div class="formgrid">
@@ -596,81 +601,103 @@ $('shipmentForm').addEventListener('submit', async e => {
     button.textContent = 'Enregistrer';
   }
 });
+
 async function loadShipmentGroups(){
  const {data,error}=await db.from('shipment_groups').select('*').order('created_at',{ascending:false});
- if(error){console.error(error);$('groupageMessage').textContent='Lecture des groupages impossible : '+error.message;return}
+ if(error){console.error(error);shipmentGroups=[];shipmentGroupLinks=[];$('groupageRows').innerHTML='<tr><td colspan="8">Erreur de lecture des groupages.</td></tr>';$('groupageMessage').textContent='Lecture des groupages impossible : '+error.message;renderExistingShipmentsPicker([]);return false}
  shipmentGroups=data||[];
  const {data:links,error:linkError}=await db.from('shipment_group_members').select('group_id,shipment_id');
- if(linkError){console.error(linkError);$('groupageMessage').textContent='Lecture des associations impossible : '+linkError.message;return}
+ if(linkError){console.error(linkError);shipmentGroups=[];shipmentGroupLinks=[];$('groupageRows').innerHTML='<tr><td colspan="8">Erreur de lecture des associations.</td></tr>';$('groupageMessage').textContent='Lecture des associations impossible : '+linkError.message;renderExistingShipmentsPicker([]);return false}
  shipmentGroupLinks=links||[];
- const countByGroup={};shipmentGroupLinks.forEach(x=>countByGroup[x.group_id]=(countByGroup[x.group_id]||0)+1);
- $('groupageRows').innerHTML=shipmentGroups.length?shipmentGroups.map(g=>`<tr><td><strong>${escapeHtml(g.group_reference)}</strong></td><td>${escapeHtml(g.transport_mode)}</td><td>${escapeHtml(g.transport_unit_reference||'—')}</td><td>${escapeHtml((g.origin||'—')+' → '+(g.destination||'—'))}</td><td>${countByGroup[g.id]||0} dossier(s)</td><td>${groupSurestariesLabel(g)}</td><td><span class="status ${STATUS_CLASS[g.status]||'s-commandee'}">${escapeHtml(g.status||'—')}</span></td><td><div class="row-actions"><button class="btn small" data-group-action="details" data-id="${escapeHtml(g.id)}">Détails</button><button class="btn small" data-group-action="edit" data-id="${escapeHtml(g.id)}">Modifier</button><button class="btn small danger" data-group-action="delete" data-id="${escapeHtml(g.id)}">Supprimer</button></div></td></tr>`).join(''):'<tr><td colspan="8">Aucun groupage créé.</td></tr>';
- renderGroupChoices();renderAlerts();
+ renderGroupageRows();renderExistingShipmentsPicker();renderAlerts();return true;
 }
-function renderGroupChoices(){ /* Ancien sélecteur conservé sans usage dans le nouveau parcours. */ }
-function makeGroupRef(){const y=new Date().getFullYear();let n=shipmentGroups.length+1;let r;do{r=`GRP-${y}-${String(n++).padStart(3,'0')}`}while(shipmentGroups.some(g=>g.group_reference===r));return r}
-let groupSupplierCounter=0;
+function renderGroupageRows(){
+ const counts={};shipmentGroupLinks.forEach(x=>counts[x.group_id]=(counts[x.group_id]||0)+1);
+ $('groupageRows').innerHTML=shipmentGroups.length?shipmentGroups.map(g=>`<tr><td><strong>${escapeHtml(g.group_reference||'—')}</strong></td><td>${escapeHtml(g.transport_mode||'—')}</td><td>${escapeHtml(g.transport_unit_reference||'—')}</td><td>${escapeHtml((g.origin||'—')+' → '+(g.destination||'—'))}</td><td>${counts[g.id]||0} chargement(s)</td><td>${groupSurestariesLabel(g)}</td><td><span class="status ${STATUS_CLASS[g.status]||'s-commandee'}">${escapeHtml(g.status||'—')}</span></td><td><div class="row-actions"><button class="btn small" data-group-action="details" data-id="${escapeHtml(g.id)}">Détails</button><button class="btn small" data-group-action="edit" data-id="${escapeHtml(g.id)}">Modifier</button><button class="btn small danger" data-group-action="delete" data-id="${escapeHtml(g.id)}">Supprimer</button></div></td></tr>`).join(''):'<tr><td colspan="8">Aucun groupage créé.</td></tr>';
+}
+function renderExistingShipmentsPicker(selectedIds){
+ const picker=$('existingShipmentsPicker');if(!picker)return;
+ const selected=new Set((selectedIds||[]).map(String));
+ const rows=shipments.slice().sort((a,b)=>(a.supplier||'').localeCompare(b.supplier||'','fr'));
+ if(!rows.length){picker.innerHTML='<p class="hint">Aucun chargement enregistré. Créez d’abord un chargement dans la page principale.</p>';return}
+ picker.innerHTML=rows.map(s=>{
+  const id=String(s.id),link=shipmentGroupLinks.find(x=>String(x.shipment_id)===id),linkedGroup=link&&shipmentGroups.find(g=>String(g.id)===String(link.group_id));
+  const checked=selectedIds?selected.has(id):(link&&String(link.group_id)===String(editingGroupId));
+  const note=link&&String(link.group_id)!==String(editingGroupId)?`Déjà rattaché à ${escapeHtml(linkedGroup?.group_reference||'un autre groupage')} — cocher pour transférer`:'Non rattaché à un autre groupage';
+  return `<label class="group-choice" style="margin:7px 0;cursor:pointer"><input type="checkbox" data-group-shipment value="${escapeHtml(id)}" ${checked?'checked':''} style="margin-top:2px"><span style="min-width:0"><strong>${escapeHtml(s.ref||'Sans référence')} — ${escapeHtml(s.supplier||'Fournisseur non précisé')}</strong><span class="subtext" style="display:block">${escapeHtml(s.status||'Statut non renseigné')} · ${escapeHtml(s.invoice||'Sans facture')} · ${escapeHtml(s.container||'Sans conteneur')}</span><span class="hint" style="display:block">${note}</span></span></label>`;
+ }).join('');
+}
+function makeGroupRef(){const y=new Date().getFullYear();let n=shipmentGroups.length+1,r;do{r=`GRP-${y}-${String(n++).padStart(3,'0')}`}while(shipmentGroups.some(g=>g.group_reference===r));return r}
 let editingGroupId=null;
-function resetGroupageForm(){editingGroupId=null;['gReference','gUnit','gTransporter','gOrigin','gDestination','gLoadDate','gEtd','gEta','gNotes','gSurestariesStartDate','gTerminalOutDate','gFreeDays','gDailyRate'].forEach(id=>$(id).value='');$('gContainerCount').value='1';$('gCurrency').value='MAD';$('gMode').value='Routier';$('gStatus').value='Commandée';updateGroupSurestariesPreview();$('newGroupSuppliers').innerHTML='';groupSupplierCounter=0;addGroupSupplierCard();$('createGroupBtn').textContent='Créer le groupage et les dossiers fournisseurs';$('newGroupSuppliers').parentElement.querySelector('.hint').textContent='Ajoutez chaque fournisseur, son numéro de facture et ses articles. Un dossier distinct sera créé pour chaque fournisseur et relié automatiquement au groupage.';$('newGroupSuppliers').hidden=false;$('addGroupSupplierBtn').hidden=false;}
-function addGroupSupplierCard(){
- const id=++groupSupplierCounter, wrap=document.createElement('div');
- wrap.className='main-card';wrap.style.padding='14px';wrap.dataset.supplierCard=String(id);
- wrap.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px"><strong>Fournisseur ${id}</strong><button type="button" class="btn small" data-remove-supplier>Supprimer</button></div>
- <div class="formgrid"><div class="form-field span2"><label>Nom du fournisseur *</label><input data-supplier-name maxlength="120" placeholder="Nom du fournisseur" required></div><div class="form-field"><label>Référence du dossier</label><input data-supplier-ref maxlength="40" placeholder="Automatique si vide"></div><div class="form-field"><label>N° facture</label><input data-supplier-invoice maxlength="100" placeholder="Numéro de facture"></div></div>
- <div style="font-weight:600;margin:12px 0 6px">Articles du fournisseur</div><div class="table-wrap"><table><thead><tr><th>Référence</th><th>Désignation *</th><th>Quantité *</th><th>Unité</th><th></th></tr></thead><tbody data-supplier-articles></tbody></table></div>
- <button type="button" class="btn small" data-add-article>+ Ajouter un article</button>`;
- const tbody=wrap.querySelector('[data-supplier-articles]');
- function addLine(){const tr=document.createElement('tr');tr.innerHTML=`<td><input data-art-ref placeholder="Référence" style="min-width:90px"></td><td><input data-art-name placeholder="Désignation" required style="min-width:150px"></td><td><input data-art-qty type="number" min="0.01" step="0.01" placeholder="Quantité" required style="min-width:90px"></td><td><select data-art-unit>${ARTICLE_UNITS.map(u=>`<option>${u}</option>`).join('')}</select></td><td><button type="button" class="btn small" data-remove-line>×</button></td>`;tbody.appendChild(tr);tr.querySelector('[data-remove-line]').addEventListener('click',()=>tr.remove())}
- wrap.querySelector('[data-add-article]').addEventListener('click',addLine);
- wrap.querySelector('[data-remove-supplier]').addEventListener('click',()=>wrap.remove());
- $('newGroupSuppliers').appendChild(wrap);addLine();
+function resetGroupageForm(){
+ editingGroupId=null;
+ ['gReference','gUnit','gTransporter','gOrigin','gDestination','gLoadDate','gEtd','gEta','gNotes','gSurestariesStartDate','gTerminalOutDate','gFreeDays','gDailyRate'].forEach(id=>$(id).value='');
+ $('gContainerCount').value='1';$('gCurrency').value='MAD';$('gMode').value='Routier';$('gStatus').value='Commandée';
+ $('createGroupBtn').textContent='Créer le groupage';$('groupageMessage').textContent='';
+ updateGroupSurestariesPreview();renderExistingShipmentsPicker([]);
 }
-$('addGroupSupplierBtn').addEventListener('click',addGroupSupplierCard);
-function openGroupageForm(){ if(!editingGroupId)resetGroupageForm();$('groupageFormPanel').hidden=false; $('groupageFormPanel').scrollIntoView({behavior:'smooth',block:'start'}); $('gReference').focus(); }
-function closeGroupageForm(){ $('groupageFormPanel').hidden=true;resetGroupageForm();$('groupageMessage').textContent=''; }
+function openGroupageForm(){if(currentRole!=='admin'){notify('Accès réservé à l’administrateur.');return}resetGroupageForm();$('groupageFormPanel').hidden=false;$('groupageFormPanel').scrollIntoView({behavior:'smooth',block:'start'});$('gReference').focus()}
+function closeGroupageForm(){$('groupageFormPanel').hidden=true;resetGroupageForm()}
 $('newGroupage').addEventListener('click',openGroupageForm);
 $('cancelGroupageBtn').addEventListener('click',closeGroupageForm);
-addGroupSupplierCard();
-async function editGroupage(id){const g=shipmentGroups.find(x=>x.id===id);if(!g)return;editingGroupId=id;$('groupageFormPanel').hidden=false;$('groupageFormPanel').scrollIntoView({behavior:'smooth',block:'start'});$('gMode').value=g.transport_mode||'Routier';$('gReference').value=g.group_reference||'';$('gUnit').value=g.transport_unit_reference||'';$('gTransporter').value=g.transporter||'';$('gOrigin').value=g.origin||'';$('gDestination').value=g.destination||'';$('gLoadDate').value=g.load_date||'';$('gEtd').value=g.etd||'';$('gEta').value=g.eta||'';$('gStatus').value=g.status||'Commandée';$('gNotes').value=g.notes||'';$('gSurestariesStartDate').value=g.surestaries_start_date||'';$('gTerminalOutDate').value=g.terminal_out_date||'';$('gFreeDays').value=g.free_days??'';$('gDailyRate').value=g.daily_rate??'';$('gContainerCount').value=g.container_count??1;$('gCurrency').value=g.currency||'MAD';updateGroupSurestariesPreview();$('newGroupSuppliers').innerHTML='<p class="hint">Modification des informations communes uniquement. Les dossiers fournisseurs déjà créés restent inchangés.</p>';$('newGroupSuppliers').hidden=true;$('addGroupSupplierBtn').hidden=true;$('createGroupBtn').textContent='Enregistrer les modifications';$('groupageMessage').textContent='';}
-async function deleteGroupage(id){if(currentRole!=='admin'){notify('Accès réservé à l’administrateur.');return}const g=shipmentGroups.find(x=>x.id===id);if(!g)return;if(!confirm(`Supprimer le groupage ${g.group_reference} ? Les dossiers fournisseurs resteront enregistrés, seuls les liens avec ce groupage seront supprimés.`))return;try{const {error:linkError}=await db.from('shipment_group_members').delete().eq('group_id',id);if(linkError)throw linkError;const {error}=await db.from('shipment_groups').delete().eq('id',id);if(error)throw error;notify('Groupage supprimé. Les dossiers fournisseurs sont conservés.');await loadFromSupabase()}catch(err){notify('Erreur de suppression : '+err.message)}}
-function toggleGroupDetails(id){const existing=document.getElementById('groupDetails_'+id);if(existing){existing.remove();return}const g=shipmentGroups.find(x=>x.id===id);if(!g)return;const members=shipmentGroupLinks.filter(x=>x.group_id===id).map(x=>shipments.find(s=>s.id===x.shipment_id)).filter(Boolean);const row=document.createElement('tr');row.id='groupDetails_'+id;const html=members.length?members.map(s=>{const arts=Array.isArray(s.articles)?s.articles:[];const artText=arts.length?arts.map(a=>`${escapeHtml(a.name||a.designation||'Article')} — ${escapeHtml(a.quantity??'')} ${escapeHtml(a.unit||'')}`).join('<br>'):escapeHtml(s.goods||s.articleNames||'Articles non détaillés');return `<div class="alert-item info" style="margin:7px 0"><strong>${escapeHtml(s.ref||'Sans référence')} · ${escapeHtml(s.supplier||'Fournisseur')}</strong><p>Facture : ${escapeHtml(s.invoice||'—')} · Statut : ${escapeHtml(s.status||'—')}</p><p>${artText}</p></div>`}).join(''):'<p class="hint">Aucun dossier fournisseur associé ou données non accessibles.</p>';row.innerHTML=`<td colspan="8" style="background:#f8faff;padding:14px 18px"><strong>Détails de ${escapeHtml(g.group_reference)}</strong><div class="formgrid" style="margin:8px 0 12px"><div><b>Transporteur :</b> ${escapeHtml(g.transporter||'—')}</div><div><b>Référence camion / conteneur :</b> ${escapeHtml(g.transport_unit_reference||'—')}</div><div><b>Chargement :</b> ${escapeHtml(fmtDate(g.load_date)||'—')}</div><div><b>ETD / ETA :</b> ${escapeHtml(fmtDate(g.etd)||'—')} / ${escapeHtml(fmtDate(g.eta)||'—')}</div></div><div class="alert-item info" style="margin:8px 0 12px"><strong>Surestaries du groupage</strong><p>Début compteur : ${escapeHtml(fmtDate(g.surestaries_start_date)||'—')} · Sortie terminal : ${escapeHtml(fmtDate(g.terminal_out_date)||'En cours')}</p><p>Franchise : ${g.free_days==null?'—':escapeHtml(g.free_days+' jour(s)')} · Tarif : ${g.daily_rate==null?'—':escapeHtml(fmtMoney(g.daily_rate,g.currency))} / jour / conteneur · Conteneurs : ${escapeHtml(g.container_count??1)}</p><p>Jours facturables : ${calcSurestaries(groupSurestariesData(g)).hasStart&&calcSurestaries(groupSurestariesData(g)).hasFree?calcSurestaries(groupSurestariesData(g)).chargeableDays+' jour(s)':'À renseigner'} · Coût estimé : ${escapeHtml(fmtMoney(calcSurestaries(groupSurestariesData(g)).amount, g.currency||'MAD'))}</p></div>${html}</td>`;const base=document.querySelector(`button[data-group-action="details"][data-id="${CSS.escape(id)}"]`)?.closest('tr');if(base)base.after(row)}
+async function editGroupage(id){
+ if(currentRole!=='admin')return;const g=shipmentGroups.find(x=>String(x.id)===String(id));if(!g)return;
+ editingGroupId=g.id;$('groupageFormPanel').hidden=false;
+ $('gMode').value=g.transport_mode||'Routier';$('gReference').value=g.group_reference||'';$('gUnit').value=g.transport_unit_reference||'';$('gTransporter').value=g.transporter||'';$('gOrigin').value=g.origin||'';$('gDestination').value=g.destination||'';$('gLoadDate').value=g.load_date||'';$('gEtd').value=g.etd||'';$('gEta').value=g.eta||'';$('gStatus').value=g.status||'Commandée';$('gNotes').value=g.notes||'';$('gSurestariesStartDate').value=g.surestaries_start_date||'';$('gTerminalOutDate').value=g.terminal_out_date||'';$('gFreeDays').value=g.free_days??'';$('gDailyRate').value=g.daily_rate??'';$('gContainerCount').value=g.container_count??1;$('gCurrency').value=g.currency||'MAD';
+ $('createGroupBtn').textContent='Enregistrer les modifications';$('groupageMessage').textContent='Cochez ou décochez les chargements à associer à ce groupage.';
+ renderExistingShipmentsPicker(shipmentGroupLinks.filter(x=>String(x.group_id)===String(id)).map(x=>String(x.shipment_id)));
+ updateGroupSurestariesPreview();$('groupageFormPanel').scrollIntoView({behavior:'smooth',block:'start'});
+}
+async function replaceGroupMembers(groupId,selectedIds){
+ const previous=shipmentGroupLinks.map(x=>({group_id:x.group_id,shipment_id:x.shipment_id}));
+ const touched=new Set([...previous.filter(x=>String(x.group_id)===String(groupId)).map(x=>String(x.shipment_id)),...selectedIds.map(String)]);
+ try{
+  const {error:clearError}=await db.from('shipment_group_members').delete().eq('group_id',groupId);if(clearError)throw clearError;
+  if(selectedIds.length){
+   const {error:moveError}=await db.from('shipment_group_members').delete().in('shipment_id',selectedIds);if(moveError)throw moveError;
+   const {error:insertError}=await db.from('shipment_group_members').insert(selectedIds.map(shipment_id=>({group_id:groupId,shipment_id})));if(insertError)throw insertError;
+  }
+ }catch(err){
+  const ids=[...touched];if(ids.length){await db.from('shipment_group_members').delete().in('shipment_id',ids);const restore=previous.filter(x=>touched.has(String(x.shipment_id)));if(restore.length)await db.from('shipment_group_members').insert(restore)}
+  throw err;
+ }
+}
 $('groupageRows').addEventListener('click',e=>{const b=e.target.closest('button[data-group-action]');if(!b)return;if(b.dataset.groupAction==='details')toggleGroupDetails(b.dataset.id);if(b.dataset.groupAction==='edit')editGroupage(b.dataset.id);if(b.dataset.groupAction==='delete')deleteGroupage(b.dataset.id)});
 $('createGroupBtn').addEventListener('click',async()=>{
- if(editingGroupId){const id=editingGroupId;const update={group_reference:$('gReference').value.trim(),transport_mode:$('gMode').value,transport_unit_reference:$('gUnit').value.trim()||null,transporter:$('gTransporter').value.trim()||null,origin:$('gOrigin').value.trim()||null,destination:$('gDestination').value.trim()||null,load_date:$('gLoadDate').value||null,etd:$('gEtd').value||null,eta:$('gEta').value||null,status:$('gStatus').value,surestaries_start_date:$('gSurestariesStartDate').value||null,terminal_out_date:$('gTerminalOutDate').value||null,free_days:$('gFreeDays').value===''?null:Number($('gFreeDays').value),daily_rate:$('gDailyRate').value===''?null:Number($('gDailyRate').value),container_count:Math.max(1,Number($('gContainerCount').value)||1),currency:$('gCurrency').value||'MAD',notes:$('gNotes').value.trim()||null,updated_at:new Date().toISOString()};if(!update.group_reference){notify('La référence du groupage est obligatoire.');return}const eb=$('createGroupBtn');eb.disabled=true;try{const {error}=await db.from('shipment_groups').update(update).eq('id',id);if(error)throw error;notify('Groupage modifié.');closeGroupageForm();await loadFromSupabase()}catch(err){notify('Erreur de modification : '+err.message)}finally{eb.disabled=false}return}
  if(currentRole!=='admin'){notify('Accès réservé à l’administrateur.');return}
- const cards=[...$('newGroupSuppliers').querySelectorAll('[data-supplier-card]')];
- if(!cards.length){notify('Ajoutez au moins un fournisseur.');return}
- const suppliers=[];
- for(const card of cards){
-  const supplier=card.querySelector('[data-supplier-name]').value.trim();
-  const invoice=card.querySelector('[data-supplier-invoice]').value.trim();
-  const ref=card.querySelector('[data-supplier-ref]').value.trim();
-  const articles=[...card.querySelectorAll('[data-supplier-articles] tr')].map(tr=>({reference:tr.querySelector('[data-art-ref]').value.trim(),name:tr.querySelector('[data-art-name]').value.trim(),quantity:Number(tr.querySelector('[data-art-qty]').value),unit:tr.querySelector('[data-art-unit]').value,availability:'À confirmer',availableQuantity:null,expectedAvailabilityDate:'',supplierComment:''}));
-  if(!supplier){notify('Renseignez le nom de chaque fournisseur.');return}
-  if(!articles.length||articles.some(a=>!a.name||!Number.isFinite(a.quantity)||a.quantity<=0)){notify(`Vérifiez les articles et quantités du fournisseur ${supplier}.`);return}
-  suppliers.push({supplier,invoice,ref,articles});
- }
- const ref=$('gReference').value.trim()||makeGroupRef();
- const row={user_id:currentUser.id,group_reference:ref,transport_mode:$('gMode').value,transport_unit_reference:$('gUnit').value.trim()||null,transporter:$('gTransporter').value.trim()||null,origin:$('gOrigin').value.trim()||null,destination:$('gDestination').value.trim()||null,load_date:$('gLoadDate').value||null,etd:$('gEtd').value||null,eta:$('gEta').value||null,status:$('gStatus').value,surestaries_start_date:$('gSurestariesStartDate').value||null,terminal_out_date:$('gTerminalOutDate').value||null,free_days:$('gFreeDays').value===''?null:Number($('gFreeDays').value),daily_rate:$('gDailyRate').value===''?null:Number($('gDailyRate').value),container_count:Math.max(1,Number($('gContainerCount').value)||1),currency:$('gCurrency').value||'MAD',notes:$('gNotes').value.trim()||null,updated_at:new Date().toISOString()};
- const btn=$('createGroupBtn');btn.disabled=true;btn.textContent='Création en cours…';let groupId=null;const created=[];
+ const selectedIds=[...$('existingShipmentsPicker').querySelectorAll('input[data-group-shipment]:checked')].map(x=>x.value);
+ if(!selectedIds.length){notify('Sélectionnez au moins un chargement existant.');return}
+ const row={group_reference:$('gReference').value.trim()||makeGroupRef(),transport_mode:$('gMode').value,transport_unit_reference:$('gUnit').value.trim()||null,transporter:$('gTransporter').value.trim()||null,origin:$('gOrigin').value.trim()||null,destination:$('gDestination').value.trim()||null,load_date:$('gLoadDate').value||null,etd:$('gEtd').value||null,eta:$('gEta').value||null,status:$('gStatus').value,surestaries_start_date:$('gSurestariesStartDate').value||null,terminal_out_date:$('gTerminalOutDate').value||null,free_days:$('gFreeDays').value===''?null:Number($('gFreeDays').value),daily_rate:$('gDailyRate').value===''?null:Number($('gDailyRate').value),container_count:Math.max(1,Number($('gContainerCount').value)||1),currency:$('gCurrency').value||'MAD',notes:$('gNotes').value.trim()||null,updated_at:new Date().toISOString()};
+ const btn=$('createGroupBtn'),isEditing=Boolean(editingGroupId),groupId=editingGroupId,oldGroup=groupId?shipmentGroups.find(x=>String(x.id)===String(groupId)):null;
+ if(!isEditing)row.user_id=currentUser.id;
+ btn.disabled=true;btn.textContent=isEditing?'Enregistrement…':'Création…';
  try{
-  const {data:g,error}=await db.from('shipment_groups').insert(row).select('*').single();if(error)throw error;groupId=g.id;
-  for(const item of suppliers){
-   const units=[...new Set(item.articles.map(a=>a.unit))];
-   const s={ref:item.ref||`IMP-${new Date().getFullYear()}-${String(shipments.length+created.length+1).padStart(3,'0')}`,supplier:item.supplier,country:'',mode:row.transport_mode,incoterm:'',goods:item.articles.map(a=>a.name).join(', '),articles:item.articles,articleNames:item.articles.map(a=>a.name).join('\n'),articleReference:item.articles[0]?.reference||'',quantity:units.length===1?item.articles.reduce((n,a)=>n+a.quantity,0):'',unit:units.length===1?units[0]:'',container:row.transport_unit_reference||'',bl:'',invoice:item.invoice,originPort:row.origin||'',destPort:row.destination||'',transporter:row.transporter||'',orderDate:'',loadDate:row.load_date||'',etd:row.etd||'',eta:row.eta||'',actualArrival:'',status:'En transit',surestariesStartDate:'',terminalOutDate:'',freeDays:'',dailyRate:'',containerCount:1,currency:'MAD',notes:`Groupage ${ref}`};
-   const saved=await saveShipment(s,true);created.push(saved.id);
-  }
-  const members=created.map(shipment_id=>({group_id:groupId,shipment_id}));
-  const {error:memberError}=await db.from('shipment_group_members').insert(members);if(memberError)throw memberError;
-  closeGroupageForm();
-  $('groupageMessage').textContent=`Groupage ${ref} créé avec ${created.length} dossier(s) fournisseur.`;notify('Groupage et dossiers fournisseurs créés.');await loadFromSupabase();
- }catch(err){
-  console.error(err);
-  if(created.length){await db.from('shipments').delete().in('id',created)}
-  if(groupId){await db.from('shipment_groups').delete().eq('id',groupId)}
-  notify('Erreur : '+err.message);$('groupageMessage').textContent='Erreur : '+err.message;
- }finally{btn.disabled=false;btn.textContent='Créer le groupage et les dossiers fournisseurs'}
+  let savedId=groupId;
+  if(isEditing){const {error}=await db.from('shipment_groups').update(row).eq('id',groupId);if(error)throw error}
+  else{const {data,error}=await db.from('shipment_groups').insert(row).select('*').single();if(error)throw error;savedId=data.id}
+  try{await replaceGroupMembers(savedId,selectedIds)}
+  catch(memberError){if(isEditing&&oldGroup){const restore={...oldGroup};delete restore.id;delete restore.created_at;await db.from('shipment_groups').update(restore).eq('id',groupId)}else await db.from('shipment_groups').delete().eq('id',savedId);throw memberError}
+  notify(isEditing?'Groupage modifié et chargements associés mis à jour.':'Groupage créé avec les chargements sélectionnés.');
+  closeGroupageForm();await loadFromSupabase();
+ }catch(err){console.error(err);$('groupageMessage').textContent='Erreur : '+err.message;notify('Erreur groupage : '+err.message)}
+ finally{btn.disabled=false;btn.textContent=editingGroupId?'Enregistrer les modifications':'Créer le groupage'}
 });
+async function deleteGroupage(id){
+ if(currentRole!=='admin'){notify('Accès réservé à l’administrateur.');return}
+ const g=shipmentGroups.find(x=>String(x.id)===String(id));if(!g)return;
+ if(!confirm(`Supprimer le groupage ${g.group_reference} ? Les chargements resteront enregistrés ; seuls leurs liens avec ce groupage seront supprimés.`))return;
+ try{const {error:linkError}=await db.from('shipment_group_members').delete().eq('group_id',id);if(linkError)throw linkError;const {error}=await db.from('shipment_groups').delete().eq('id',id);if(error)throw error;notify('Groupage supprimé. Les chargements sont conservés.');await loadFromSupabase()}
+ catch(err){notify('Erreur de suppression : '+err.message)}
+}
+function toggleGroupDetails(id){
+ const existing=document.getElementById('groupDetails_'+id);if(existing){existing.remove();return}
+ const g=shipmentGroups.find(x=>String(x.id)===String(id));if(!g)return;
+ const members=shipmentGroupLinks.filter(x=>String(x.group_id)===String(id)).map(x=>shipments.find(s=>String(s.id)===String(x.shipment_id))).filter(Boolean);
+ const row=document.createElement('tr');row.id='groupDetails_'+id;
+ const html=members.length?members.map(s=>{const arts=Array.isArray(s.articles)?s.articles:[];const artText=arts.length?arts.map(a=>`${escapeHtml(a.name||a.designation||'Article')} — ${escapeHtml(a.quantity??'')} ${escapeHtml(a.unit||'')}`).join('<br>'):escapeHtml(s.goods||s.articleNames||'Articles non détaillés');return `<div class="alert-item info" style="margin:7px 0"><strong>${escapeHtml(s.ref||'Sans référence')} · ${escapeHtml(s.supplier||'Fournisseur')}</strong><p>Facture : ${escapeHtml(s.invoice||'—')} · Statut : ${escapeHtml(s.status||'—')}</p><p>${artText}</p></div>`}).join(''):'<p class="hint">Aucun chargement associé.</p>';
+ row.innerHTML=`<td colspan="8" style="background:#f8faff;padding:14px 18px"><strong>Détails de ${escapeHtml(g.group_reference)}</strong><div class="formgrid" style="margin:8px 0 12px"><div><b>Transporteur :</b> ${escapeHtml(g.transporter||'—')}</div><div><b>Référence camion / conteneur :</b> ${escapeHtml(g.transport_unit_reference||'—')}</div><div><b>Chargement :</b> ${escapeHtml(fmtDate(g.load_date)||'—')}</div><div><b>ETD / ETA :</b> ${escapeHtml(fmtDate(g.etd)||'—')} / ${escapeHtml(fmtDate(g.eta)||'—')}</div></div><div class="alert-item info" style="margin:8px 0 12px"><strong>Surestaries du groupage</strong><p>Début compteur : ${escapeHtml(fmtDate(g.surestaries_start_date)||'—')} · Sortie terminal : ${escapeHtml(fmtDate(g.terminal_out_date)||'En cours')}</p><p>Franchise : ${g.free_days==null?'—':escapeHtml(g.free_days+' jour(s)')} · Tarif : ${g.daily_rate==null?'—':escapeHtml(fmtMoney(g.daily_rate,g.currency))} / jour / conteneur · Conteneurs : ${escapeHtml(g.container_count??1)}</p><p>Jours facturables : ${calcSurestaries(groupSurestariesData(g)).hasStart&&calcSurestaries(groupSurestariesData(g)).hasFree?calcSurestaries(groupSurestariesData(g)).chargeableDays+' jour(s)':'À renseigner'} · Coût estimé : ${escapeHtml(fmtMoney(calcSurestaries(groupSurestariesData(g)).amount,g.currency||'MAD'))}</p></div>${html}</td>`;
+ const base=document.querySelector(`button[data-group-action="details"][data-id="${CSS.escape(String(id))}"]`)?.closest('tr');if(base)base.after(row);
+}
 async function deleteShipment(id){if(currentRole!=='admin'){notify('Accès en lecture seule.');return}const s=shipments.find(x=>x.id===id);if(!s)return;if(!confirm(`Supprimer le chargement ${s.ref||''} ? Cette action est définitive.`))return;const {error}=await db.from('shipments').delete().eq('id',id);if(error){notify('Erreur Supabase : '+error.message);return}shipments=shipments.filter(x=>x.id!==id);render();closeModal();notify('Chargement supprimé.')}
 $('shipmentRows').addEventListener('click',e=>{if(currentRole!=='admin')return;const b=e.target.closest('button[data-action]');if(!b)return;if(b.dataset.action==='edit')openModal(b.dataset.id);if(b.dataset.action==='delete')deleteShipment(b.dataset.id)});
 $('newShipment').addEventListener('click',()=>openModal());$('emptyAdd').addEventListener('click',()=>openModal());$('closeModal').addEventListener('click',closeModal);$('cancelModal').addEventListener('click',closeModal);$('modalOverlay').addEventListener('click',e=>{if(e.target===$('modalOverlay'))closeModal()});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('modalOverlay').classList.contains('open'))closeModal()});$('deleteShipment').addEventListener('click',()=>{if(editingId)deleteShipment(editingId)});
@@ -679,7 +706,7 @@ document.querySelectorAll('.metric-clickable').forEach(card=>{const activate=()=
 function download(name,content,type){const blob=new Blob([content],{type});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 function csvEscape(x){const v=String(x??'');return '"'+v.replace(/"/g,'""')+'"'}
 $('exportCsv').addEventListener('click',()=>{if(currentRole!=='admin')return;const headers=['Référence','Fournisseur','Pays origine','Transport','Incoterm','Marchandise / catégorie','Référence article','Noms des articles','Quantité totale','Unité','Conteneur','BL','Facture','Départ','Destination','Transitaire','Date commande','Date chargement','ETD','ETA','Arrivée réelle','Statut','Début compteur surestaries','Sortie terminal','Franchise (jours)','Tarif/jour/conteneur','Nombre conteneurs','Devise','Notes'];const keys=['ref','supplier','country','mode','incoterm','goods','articleReference','articleNames','quantity','unit','container','bl','invoice','originPort','destPort','transporter','orderDate','loadDate','etd','eta','actualArrival','status','surestariesStartDate','terminalOutDate','freeDays','dailyRate','containerCount','currency','notes'];const csv='\ufeff'+[headers,...shipments.map(s=>keys.map(k=>s[k]??''))].map(row=>row.map(csvEscape).join(';')).join('\r\n');download(`suivi-import-${todayISO()}.csv`,csv,'text/csv;charset=utf-8;');notify('Export CSV prêt à être ouvert dans Excel.')});
-$('exportGroupsExcel').addEventListener('click',()=>{if(currentRole!=='admin'){notify('Accès réservé à l’administrateur.');return}const headers=['Référence groupage','Mode transport','Camion / conteneur','Transporteur','Origine','Destination','Date chargement','ETD','ETA','Statut groupage','Début surestaries','Sortie terminal','Franchise (jours)','Tarif/jour/conteneur','Nombre conteneurs','Devise','Jours facturables','Coût estimé','Référence dossier','Fournisseur','N° facture','Référence article','Article','Quantité','Unité','Statut dossier'];const rows=[headers];shipmentGroups.forEach(g=>{const ids=shipmentGroupLinks.filter(x=>x.group_id===g.id).map(x=>x.shipment_id);const linked=ids.map(id=>shipments.find(s=>s.id===id)).filter(Boolean);if(!linked.length)rows.push([g.group_reference,g.transport_mode,g.transport_unit_reference,g.transporter,g.origin,g.destination,g.load_date,g.etd,g.eta,g.status,g.surestaries_start_date,g.terminal_out_date,g.free_days,g.daily_rate,g.container_count,g.currency,calcSurestaries(groupSurestariesData(g)).chargeableDays,calcSurestaries(groupSurestariesData(g)).amount,'','','','','','','','']);linked.forEach(s=>{const arts=Array.isArray(s.articles)&&s.articles.length?s.articles:[{reference:s.articleReference||'',name:s.goods||s.articleNames||'',quantity:s.quantity||'',unit:s.unit||''}];arts.forEach(a=>rows.push([g.group_reference,g.transport_mode,g.transport_unit_reference,g.transporter,g.origin,g.destination,g.load_date,g.etd,g.eta,g.status,g.surestaries_start_date,g.terminal_out_date,g.free_days,g.daily_rate,g.container_count,g.currency,calcSurestaries(groupSurestariesData(g)).chargeableDays,calcSurestaries(groupSurestariesData(g)).amount,s.ref,s.supplier,s.invoice,a.reference,a.name||a.designation,a.quantity,a.unit,s.status]))})});const csv='\ufeff'+rows.map(r=>r.map(csvEscape).join(';')).join('\r\n');download(`groupages-import-${todayISO()}.csv`,csv,'text/csv;charset=utf-8;');notify('Export des groupages prêt à être ouvert dans Excel.')});
+$('exportGroupsExcel').addEventListener('click',()=>{if(currentRole!=='admin'){notify('Accès réservé à l’administrateur.');return}const headers=['Référence groupage','Mode transport','Camion / conteneur','Transporteur','Origine','Destination','Date chargement','ETD','ETA','Statut groupage','Début surestaries','Sortie terminal','Franchise (jours)','Tarif/jour/conteneur','Nombre conteneurs','Devise','Jours facturables','Coût estimé','Référence chargement','Fournisseur','N° facture','Référence article','Article','Quantité','Unité','Statut dossier'];const rows=[headers];shipmentGroups.forEach(g=>{const ids=shipmentGroupLinks.filter(x=>x.group_id===g.id).map(x=>x.shipment_id);const linked=ids.map(id=>shipments.find(s=>s.id===id)).filter(Boolean);if(!linked.length)rows.push([g.group_reference,g.transport_mode,g.transport_unit_reference,g.transporter,g.origin,g.destination,g.load_date,g.etd,g.eta,g.status,g.surestaries_start_date,g.terminal_out_date,g.free_days,g.daily_rate,g.container_count,g.currency,calcSurestaries(groupSurestariesData(g)).chargeableDays,calcSurestaries(groupSurestariesData(g)).amount,'','','','','','','','']);linked.forEach(s=>{const arts=Array.isArray(s.articles)&&s.articles.length?s.articles:[{reference:s.articleReference||'',name:s.goods||s.articleNames||'',quantity:s.quantity||'',unit:s.unit||''}];arts.forEach(a=>rows.push([g.group_reference,g.transport_mode,g.transport_unit_reference,g.transporter,g.origin,g.destination,g.load_date,g.etd,g.eta,g.status,g.surestaries_start_date,g.terminal_out_date,g.free_days,g.daily_rate,g.container_count,g.currency,calcSurestaries(groupSurestariesData(g)).chargeableDays,calcSurestaries(groupSurestariesData(g)).amount,s.ref,s.supplier,s.invoice,a.reference,a.name||a.designation,a.quantity,a.unit,s.status]))})});const csv='\ufeff'+rows.map(r=>r.map(csvEscape).join(';')).join('\r\n');download(`groupages-import-${todayISO()}.csv`,csv,'text/csv;charset=utf-8;');notify('Export des groupages prêt à être ouvert dans Excel.')});
 $('backupBtn').addEventListener('click',()=>{if(currentRole!=='admin')return;download(`sauvegarde-suivi-import-${todayISO()}.json`,JSON.stringify({app:'Suivi Import',version:1,exportedAt:new Date().toISOString(),shipments},null,2),'application/json');notify('Sauvegarde téléchargée.')});
 $('restoreBtn').addEventListener('click',()=>{if(currentRole==='admin')$('restoreFile').click()});
 $('restoreFile').addEventListener('change', () => {
