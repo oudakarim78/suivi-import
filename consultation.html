@@ -122,8 +122,6 @@ function appliquerFiltres(){
  afficherDossiers(dossiers);
 }
 
- afficherGroupages(groupes);afficherDossiers(dossiers);
-}
 function afficherGroupages(liste){
  $('countGroupages').textContent=liste.length+' groupage(s)';
  if(!groupageDisponible){$('groupages').innerHTML='<div class="empty">Les chargements groupage ne sont pas accessibles. Vérifiez les autorisations de lecture de la vue groupages_consultation_public dans Supabase.</div>';return;}
