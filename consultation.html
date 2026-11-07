@@ -82,15 +82,46 @@ function rechercherDansDossier(s){
  return normaliser([s.reference,s.ref,s.supplier,s.container,s.bl,s.invoice,s.status,s.goods,s.article_names,s.origin_port,s.dest_port,s.transporter,...arts.map(a=>[a.reference,a.name,a.designation,a.quantity,a.unit].join(' '))].join(' '));
 }
 function membreCommeDossier(m){return {...m,reference:m.supplier_reference||m.reference, status:m.supplier_status||m.status};}
+
 function appliquerFiltres(){
- const q=normaliser($('recherche').value), st=normaliser($('filtreStatut').value);
- const dossiers=tousLesDossiers.filter(s=>(!q||rechercherDansDossier(s).includes(q))&&(!st||normaliser(s.status)===st));
+ const q=normaliser($('recherche').value);
+ const st=normaliser($('filtreStatut').value);
+
+ // Exclure des dossiers ceux qui sont déjà dans un groupage
+ const idsEnGroupage = new Set(
+   liensGroupage.map(x => String(x.shipment_id))
+ );
+
+ const dossiers=tousLesDossiers.filter(s=>
+   !idsEnGroupage.has(String(s.id)) &&
+   (!q || rechercherDansDossier(s).includes(q)) &&
+   (!st || normaliser(s.status)===st)
+ );
+
  const groupes=tousLesGroupages.filter(g=>{
    const membres=liensGroupage.filter(x=>x.group_id===g.id);
-   const texte=normaliser([g.group_reference,g.transport_mode,g.transport_unit_reference,g.transporter,g.origin,g.destination,g.status,...membres.map(x=>rechercherDansDossier(membreCommeDossier(x)))].join(' '));
-   const statutOk=!st||normaliser(g.status)===st||membres.some(x=>normaliser(x.supplier_status||x.status)===st);
-   return (!q||texte.includes(q))&&statutOk;
+   const texte=normaliser([
+     g.group_reference,
+     g.transport_mode,
+     g.transport_unit_reference,
+     g.transporter,
+     g.origin,
+     g.destination,
+     g.status,
+     ...membres.map(x=>rechercherDansDossier(membreCommeDossier(x)))
+   ].join(' '));
+
+   const statutOk=!st ||
+     normaliser(g.status)===st ||
+     membres.some(x=>normaliser(x.supplier_status||x.status)===st);
+
+   return (!q || texte.includes(q)) && statutOk;
  });
+
+ afficherGroupages(groupes);
+ afficherDossiers(dossiers);
+}
+
  afficherGroupages(groupes);afficherDossiers(dossiers);
 }
 function afficherGroupages(liste){
