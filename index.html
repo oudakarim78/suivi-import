@@ -106,15 +106,36 @@ body.consultant .table-wrap table{min-width:680px}
         <div class="form-field"><label for="gContainerCount">Nombre de conteneurs</label><input id="gContainerCount" type="number" min="1" step="1" value="1"></div>
         <div class="form-field"><label for="gCurrency">Devise</label><select id="gCurrency"><option>MAD</option><option>EUR</option><option>USD</option></select></div>
         <div class="calc-preview" id="groupSurestariesPreview" aria-live="polite"><div><div class="calc-label">Jours facturables estimés</div><div class="calc-value" id="gPreviewChargeDays">—</div></div><div><div class="calc-label">Coût estimé</div><div class="calc-value" id="gPreviewChargeAmount">—</div></div><div><div class="calc-label">Calcul jusqu’au</div><div class="calc-value" id="gPreviewUntil">—</div></div><div class="calc-note">Même formule que le chargement individuel : jours calendaires inclusifs, moins la franchise, multipliés par le tarif journalier et le nombre de conteneurs.</div></div>
-        <div class="form-field full"><label for="gNotes">Notes</label><textarea id="gNotes" placeholder="Informations communes au groupage"></textarea></div>
-      </div>
-      <div class="section-title">Fournisseurs de ce groupage</div>
-      <p class="hint">Ajoutez chaque fournisseur, son numéro de facture et ses articles. Un dossier distinct sera créé pour chaque fournisseur et relié automatiquement au groupage.</p>
-      <div id="newGroupSuppliers" style="display:grid;gap:12px;margin:10px 0 14px"></div>
-      <button class="btn small" type="button" id="addGroupSupplierBtn">+ Ajouter un fournisseur</button>
-      <div style="margin-top:16px;display:flex;gap:9px;flex-wrap:wrap"><button class="btn primary" id="createGroupBtn" type="button">Créer le groupage et les dossiers fournisseurs</button><button class="btn" id="cancelGroupageBtn" type="button">Annuler</button></div>
-      <div id="groupageMessage" class="hint" style="margin-top:9px"></div>
-    </div>
+      
+     <div class="form-field full">
+  <label for="gNotes">Notes</label>
+  <textarea id="gNotes" placeholder="Informations communes au groupage"></textarea>
+</div>
+</div>
+
+<div class="section-title">Ajouter des dossiers d'importation existants</div>
+
+<p class="hint">
+  Sélectionnez les dossiers déjà enregistrés qui doivent être rattachés à ce groupage.
+  Ils ne seront ni recréés ni modifiés.
+</p>
+
+<div id="existingShipmentsPicker"
+     style="border:1px solid #dbe3ef;border-radius:8px;padding:12px;margin:10px 0 16px">
+  <p class="hint">Chargement des dossiers disponibles...</p>
+</div>
+
+<div class="section-title">Fournisseurs de ce groupage</div>
+<p class="hint">
+  Ajoutez chaque fournisseur, son numéro de facture et ses articles.
+  Un dossier distinct sera créé pour chaque fournisseur et relié automatiquement au groupage.
+</p>
+
+<div id="newGroupSuppliers" style="display:grid;gap:12px;margin:10px 0 14px"></div>
+
+<button class="btn small" type="button" id="addGroupSupplierBtn">
+  + Ajouter un fournisseur
+</button>
     <div class="table-wrap"><table><thead><tr><th>Référence groupage</th><th>Transport</th><th>Camion / conteneur</th><th>Trajet</th><th>Dossiers associés</th><th>Surestaries estimées</th><th>Statut</th><th>Actions</th></tr></thead><tbody id="groupageRows"><tr><td colspan="8">Aucun groupage chargé.</td></tr></tbody></table></div>
   </section>
   <div class="footer-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Données hébergées dans Supabase. Les droits sont contrôlés par Supabase (RLS), pas uniquement par l’interface.</div>
@@ -230,53 +251,71 @@ let currentUser=null, currentRole=null;
 const $=id=>document.getElementById(id);
 const todayISO=()=>{const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10)};
 function loadData(){return []}
+
+
 async function loadFromSupabase(){
- const {data,error}=await db.from('shipments').select('*').order('created_at',{ascending:false});
- if(error){console.error(error);notify('Erreur Supabase : '+error.message);return false}
+  const {data,error}=await db
+    .from('shipments')
+    .select('*')
+    .order('created_at',{ascending:false});
 
- shipments=(data||[]).map(s=>({
-  articles:s.articles||[],
-  ...s,
-  ref:s.reference??s.ref,
-  articleNames:s.article_names??'',
-  articleReference:s.article_reference??'',
-  originPort:s.origin_port??'',
-  destPort:s.dest_port??'',
-  orderDate:s.order_date??'',
-  loadDate:s.load_date??'',
-  actualArrival:s.actual_arrival??'',
-  surestariesStartDate:s.surestaries_start_date??'',
-  terminalOutDate:s.terminal_out_date??'',
-  freeDays:s.free_days??'',
-  dailyRate:s.daily_rate??'',
-  containerCount:s.container_count??1,
-  updatedAt:s.updated_at??s.created_at
- }));
-
- if(currentRole==='admin'){
-  const {data:contacts,error:contactError}=await db.from('shipment_contacts').select('*');
-  if(contactError){
-   console.error(contactError);
-   notify('Erreur de lecture des contacts : '+contactError.message);
-  }else{
-   const contactMap=new Map((contacts||[]).map(c=>[c.shipment_id,c]));
-   shipments=shipments.map(s=>{
-    const c=contactMap.get(s.id)||{};
-    return {
-     ...s,
-     transporterPhone:c.transporter_phone||'',
-     transitCompany:c.transit_company||'',
-     transitPhone:c.transit_phone||''
-    };
-   });
+  if(error){
+    console.error(error);
+    notify('Erreur Supabase : '+error.message);
+    return false;
   }
- }
 
- $('lastUpdated').textContent='Données Supabase : '+new Date().toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'});
- render();
- await loadShipmentGroups();
- return true;
+  shipments=(data||[]).map(s=>({
+    articles:s.articles||[],
+    ...s,
+    ref:s.reference??s.ref,
+    articleNames:s.article_names??'',
+    articleReference:s.article_reference??'',
+    originPort:s.origin_port??'',
+    destPort:s.dest_port??'',
+    orderDate:s.order_date??'',
+    loadDate:s.load_date??'',
+    actualArrival:s.actual_arrival??'',
+    surestariesStartDate:s.surestaries_start_date??'',
+    terminalOutDate:s.terminal_out_date??'',
+    freeDays:s.free_days??'',
+    dailyRate:s.daily_rate??'',
+    containerCount:s.container_count??1,
+    updatedAt:s.updated_at??s.created_at
+  }));
+
+  if(currentRole==='admin'){
+    const {data:contacts,error:contactError}=await db
+      .from('shipment_contacts')
+      .select('*');
+
+    if(contactError){
+      console.error(contactError);
+      notify('Erreur de lecture des contacts : '+contactError.message);
+    }else{
+      const contactMap=new Map((contacts||[]).map(c=>[c.shipment_id,c]));
+
+      shipments=shipments.map(s=>{
+        const c=contactMap.get(s.id)||{};
+        return {
+          ...s,
+          transporterPhone:c.transporter_phone||'',
+          transitCompany:c.transit_company||'',
+          transitPhone:c.transit_phone||''
+        };
+      });
+    }
+  }
+
+  await loadShipmentGroups();
+
+  $('lastUpdated').textContent='Données Supabase : '+new Date().toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'});
+
+  render();
+
+  return true;
 }
+
   async function saveShipmentContacts(shipmentId,s){
  const row={
   shipment_id:shipmentId,
