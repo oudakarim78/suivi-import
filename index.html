@@ -264,7 +264,22 @@ async function loadFromSupabase(){
     notify('Erreur Supabase : '+error.message);
     return false;
   }
+  shipments=(data||[]).map(s=>({
+    ...s,
+    articles:s.articles||[],
+    ref:s.reference??s.ref,
+    articleNames:s.article_names??'',
+    articleReference:s.article_reference??'',
+    originPort:s.origin_port??'',
+    destPort:s.dest_port??''
+  }));
 
+  await loadShipmentGroups();
+
+  render();
+
+  return true;
+}
   shipments=(data||[]).map(s=>({
     articles:s.articles||[],
     ...s,
