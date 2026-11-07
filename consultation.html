@@ -34,6 +34,19 @@ button{cursor:pointer}.filtres button,.btn{background:var(--navy);color:#fff;bor
 .empty{padding:20px;background:white;border:1px dashed #cbd5e1;border-radius:10px;color:var(--muted)}
 .hidden{display:none}
 @media(max-width:620px){.container{padding:18px 12px}.infos{flex-direction:column;gap:7px}.filtres input,.filtres select{width:100%;min-width:100%}.section-head{align-items:flex-start;flex-direction:column}}
+
+.status-group{margin:0 0 22px}
+.status-group-head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 13px;margin-bottom:10px;background:#e8eef7;border-left:4px solid var(--blue);border-radius:8px}
+.status-group-head h3{font-size:17px;margin:0}
+.status-cards{display:grid;grid-template-columns:1fr;gap:12px}
+.card-title-line{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.card-title-line h3{margin:0;font-size:17px}
+.groupage-info{padding:9px 11px;background:#f1f5fb;border-radius:7px;font-size:13px;color:#435166}
+.muted{color:var(--muted);font-size:13px}
+.status[data-status="Livré"],.status[data-status="Livrée"]{background:#dcfce7;color:#166534}
+.status[data-status="Bloqué"]{background:#fee2e2;color:#991b1b}
+.status[data-status="En transit"]{background:#fef3c7;color:#92400e}
+
 </style>
 </head>
 <body>
@@ -46,13 +59,9 @@ button{cursor:pointer}.filtres button,.btn{background:var(--navy);color:#fff;bor
 <option>Commandée</option><option>En préparation</option><option>Chargé</option><option>En transit</option><option>Arrivé au port</option><option>Dédouanement</option><option>En livraison</option><option>Livré</option><option>Bloqué</option><option>Annulée</option></select>
 <button type="button" id="reinitialiser">Réinitialiser</button>
 </div>
-<section class="section" id="sectionGroupages">
-<div class="section-head"><h2>Chargements en groupage</h2><span class="count" id="countGroupages"></span></div>
-<div id="groupages"><div class="empty">Chargement des groupages…</div></div>
-</section>
 <section class="section">
-<div class="section-head"><h2>Dossiers d’importation</h2><span class="count" id="countDossiers"></span></div>
-<div id="dossiers"><div class="empty">Chargement des dossiers…</div></div>
+<div class="section-head"><h2>Tous les chargements par statut</h2><span class="count" id="countChargements"></span></div>
+<div id="chargements"><div class="empty">Chargement des chargements…</div></div>
 </section>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -62,108 +71,97 @@ const SUPABASE_URL='https://mnyokiniupvtzesdmwit.supabase.co';
 const KEY='sb_publishable_-HIf7IptcZ1as_TXkn5SCQ_Fx6lPnbi';
 const db=window.supabase.createClient(SUPABASE_URL,KEY);
 const $=id=>document.getElementById(id);
-let tousLesDossiers=[], tousLesGroupages=[], liensGroupage=[], groupageDisponible=true;
+
+let tousLesDossiers=[], lignesGroupage=[], chargementsUnifies=[], groupageDisponible=true;
+const STATUTS_ORDRE=['Commandée','En préparation','Chargé','En transit','Arrivé au port','Dédouanement','En livraison','Livré','Bloqué','Annulée'];
+
 function safe(v){return String(v??'—').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function normaliser(v){return String(v??'').replace(/<br\s*\/?\s*>/gi,' ').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();}
 function obtenirArticles(s){
  if(Array.isArray(s.articles)&&s.articles.length)return s.articles;
- if(s.article_names||s.articleNames||s.goods)return [{reference:s.article_reference||'',name:s.article_names||s.articleNames||s.goods,quantity:s.quantity,unit:s.unit}];
+ if(s.article_names||s.articleNames||s.goods)return [{reference:s.article_reference||s.articleReference||'',name:s.article_names||s.articleNames||s.goods,quantity:s.quantity,unit:s.unit}];
  return [];
 }
-function totalArticles(articles){const t={};articles.forEach(a=>{const u=a.unit||'Autre';if(a.quantity!==null&&a.quantity!==undefined&&a.quantity!=='')t[u]=(t[u]||0)+(Number(a.quantity)||0)});return Object.entries(t).map(([u,n])=>n.toLocaleString('fr-FR')+' '+u).join(' · ');}
+function totalArticles(articles){
+ const t={};articles.forEach(a=>{const u=a.unit||'Autre';if(a.quantity!==null&&a.quantity!==undefined&&a.quantity!=='')t[u]=(t[u]||0)+(Number(a.quantity)||0)});
+ return Object.entries(t).map(([u,n])=>n.toLocaleString('fr-FR')+' '+u).join(' · ');
+}
 function statut(s){return s||'Non renseigné';}
 function articlesHtml(s){
  const arts=obtenirArticles(s);
- if(!arts.length)return '<p>Aucun article détaillé.</p>';
+ if(!arts.length)return '<p class="muted">Aucun article détaillé.</p>';
  return `<div class="table-scroll"><table class="articles"><thead><tr><th>Référence</th><th>Désignation</th><th>Quantité</th><th>Unité</th></tr></thead><tbody>${arts.map(a=>`<tr><td>${safe(a.reference)}</td><td style="white-space:pre-line">${safe(String(a.name||a.designation||'').replace(/<br\s*\/?\s*>/gi,'\n'))}</td><td>${safe(a.quantity)}</td><td>${safe(a.unit)}</td></tr>`).join('')}</tbody></table></div><p><strong>Total :</strong> ${safe(totalArticles(arts)||'—')}</p>`;
 }
-function rechercherDansDossier(s){
+function rechercherDansChargement(s){
  const arts=obtenirArticles(s);
- return normaliser([s.reference,s.ref,s.supplier,s.container,s.bl,s.invoice,s.status,s.goods,s.article_names,s.origin_port,s.dest_port,s.transporter,...arts.map(a=>[a.reference,a.name,a.designation,a.quantity,a.unit].join(' '))].join(' '));
+ return normaliser([s.reference,s.ref,s.supplier,s.container,s.bl,s.invoice,s.status,s.goods,s.article_names,s.origin_port,s.dest_port,s.transporter,s.group_reference,s.transport_mode,s.transport_unit_reference,s.origin,s.destination,...arts.map(a=>[a.reference,a.name,a.designation,a.quantity,a.unit].join(' '))].join(' '));
 }
-function membreCommeDossier(m){return {...m,reference:m.supplier_reference||m.reference, status:m.supplier_status||m.status};}
-
-function appliquerFiltres(){
- const q=normaliser($('recherche').value);
- const st=normaliser($('filtreStatut').value);
-
- // Exclure des dossiers ceux qui sont déjà dans un groupage
- const idsEnGroupage = new Set(
-   liensGroupage.map(x => String(x.shipment_id))
- );
-
- const dossiers=tousLesDossiers.filter(s=>
-   !idsEnGroupage.has(String(s.id)) &&
-   (!q || rechercherDansDossier(s).includes(q)) &&
-   (!st || normaliser(s.status)===st)
- );
-
- const groupes=tousLesGroupages.filter(g=>{
-   const membres=liensGroupage.filter(x=>x.group_id===g.id);
-   const texte=normaliser([
-     g.group_reference,
-     g.transport_mode,
-     g.transport_unit_reference,
-     g.transporter,
-     g.origin,
-     g.destination,
-     g.status,
-     ...membres.map(x=>rechercherDansDossier(membreCommeDossier(x)))
-   ].join(' '));
-
-   const statutOk=!st ||
-     normaliser(g.status)===st ||
-     membres.some(x=>normaliser(x.supplier_status||x.status)===st);
-
-   return (!q || texte.includes(q)) && statutOk;
+function construireChargementsUnifies(){
+ const parId=new Map();
+ tousLesDossiers.forEach(s=>{
+  const id=String(s.id??s.reference??s.ref??'');
+  if(id)parId.set(id,{...s,_groupage:null});
  });
-
- afficherGroupages(groupes);
- afficherDossiers(dossiers);
+ lignesGroupage.forEach(m=>{
+  const id=String(m.shipment_id??m.id??'');
+  if(!id)return;
+  const base=parId.get(id)||{};
+  const rattachement={group_id:m.group_id,group_reference:m.group_reference,transport_mode:m.transport_mode,transport_unit_reference:m.transport_unit_reference,transporter:m.transporter,origin:m.origin,destination:m.destination,group_status:m.group_status,load_date:m.load_date};
+  const membre={
+   ...base,...m,
+   id:m.shipment_id||base.id||m.id,
+   reference:m.supplier_reference||m.reference||base.reference||base.ref,
+   status:m.supplier_status||m.status||base.status||'Non renseigné',
+   supplier:m.supplier||base.supplier,invoice:m.invoice||base.invoice,
+   container:m.container||base.container,bl:m.bl||base.bl,
+   articles:m.articles||base.articles,article_names:m.article_names||base.article_names,
+   goods:m.goods||base.goods,quantity:m.quantity??base.quantity,unit:m.unit||base.unit,
+   _groupage:rattachement
+  };
+  parId.set(id,membre);
+ });
+ chargementsUnifies=Array.from(parId.values());
 }
-
-function afficherGroupages(liste){
- $('countGroupages').textContent=liste.length+' groupage(s)';
- if(!groupageDisponible){$('groupages').innerHTML='<div class="empty">Les chargements groupage ne sont pas accessibles. Vérifiez les autorisations de lecture de la vue groupages_consultation_public dans Supabase.</div>';return;}
- if(!liste.length){$('groupages').innerHTML='<div class="empty">Aucun groupage ne correspond à votre recherche.</div>';return;}
- $('groupages').innerHTML=liste.map(g=>{
-  const membres=liensGroupage.filter(x=>x.group_id===g.id);
-  const membreHtml=membres.length?membres.map(x=>{const s=membreCommeDossier(x);return `<div class="member"><h4>${safe(s.reference||'Dossier')} — ${safe(s.supplier||'Fournisseur non précisé')}</h4><p><strong>Facture :</strong> ${safe(s.invoice)} &nbsp; <strong>Statut dossier :</strong> ${safe(statut(s.status))}</p><p><strong>Conteneur :</strong> ${safe(s.container)} &nbsp; <strong>BL :</strong> ${safe(s.bl)}</p>${articlesHtml(s)}</div>`;}).join(''):'<p>Aucun dossier fournisseur associé.</p>';
-  return `<article class="card"><h3>${safe(g.group_reference||'Groupage')}</h3><div class="infos"><span><strong>Transport :</strong> ${safe(g.transport_mode)}</span><span><strong>Camion / conteneur :</strong> ${safe(g.transport_unit_reference)}</span><span><strong>Transporteur :</strong> ${safe(g.transporter)}</span><span><strong>Trajet :</strong> ${safe(g.origin)} → ${safe(g.destination)}</span><span><strong>Date de chargement :</strong> ${safe(g.load_date)}</span><span><strong>Dossiers :</strong> ${membres.length}</span><span class="status">${safe(statut(g.status))}</span></div><div class="group-members"><strong>Dossiers fournisseurs et articles</strong>${membreHtml}</div></article>`;
- }).join('');
+function afficherChargement(s){
+ const arts=obtenirArticles(s),grp=s._groupage;
+ const reference=s.reference||s.ref||'Chargement sans référence';
+ const groupHtml=grp?`<span><strong>Groupage transport :</strong> ${safe(grp.group_reference||'Groupage')}</span>`:`<span><strong>Type :</strong> Chargement individuel</span>`;
+ const groupDetails=grp?`<p class="groupage-info">Rattaché au groupage <strong>${safe(grp.group_reference||'—')}</strong>${grp.transport_unit_reference?' · '+safe(grp.transport_unit_reference):''}${grp.transporter?' · '+safe(grp.transporter):''}</p>`:'';
+ return `<article class="card">
+  <div class="card-title-line"><h3>${safe(reference)} — ${safe(s.supplier||'Fournisseur non précisé')}</h3><span class="status" data-status="${safe(s.status)}">${safe(statut(s.status))}</span></div>
+  <div class="infos"><span><strong>Conteneur :</strong> ${safe(s.container)}</span><span><strong>BL :</strong> ${safe(s.bl)}</span><span><strong>Facture :</strong> ${safe(s.invoice)}</span>${groupHtml}${s.transporter?`<span><strong>Transitaire :</strong> ${safe(s.transporter)}</span>`:''}${s.origin_port||s.origin?`<span><strong>Origine :</strong> ${safe(s.origin_port||s.origin)}</span>`:''}${s.dest_port||s.destination?`<span><strong>Destination :</strong> ${safe(s.dest_port||s.destination)}</span>`:''}</div>
+  ${groupDetails}<p><strong>${arts.length}</strong> article(s) · ${safe(totalArticles(arts)||'Total non renseigné')}</p>${articlesHtml(s)}
+ </article>`;
 }
-function afficherDossiers(liste){
- $('countDossiers').textContent=liste.length+' dossier(s)';
- if(!liste.length){$('dossiers').innerHTML='<div class="empty">Aucun dossier ne correspond à votre recherche.</div>';return;}
- $('dossiers').innerHTML=liste.map(s=>{
-  const arts=obtenirArticles(s),g=liensGroupage.find(x=>x.shipment_id===s.id),grp=g&&tousLesGroupages.find(x=>x.id===g.group_id);
-  return `<article class="card"><h3>${safe(s.reference||'Dossier')} — ${safe(s.supplier||'Fournisseur non précisé')}</h3><div class="infos"><span><strong>Conteneur :</strong> ${safe(s.container)}</span><span><strong>BL :</strong> ${safe(s.bl)}</span><span><strong>Facture :</strong> ${safe(s.invoice)}</span><span><strong>Groupage :</strong> ${safe(grp?.group_reference||'Non renseigné')}</span><span class="status">${safe(statut(s.status))}</span></div><p><strong>${arts.length}</strong> article(s) · ${safe(totalArticles(arts)||'Total non renseigné')}</p>${articlesHtml(s)}</article>`;
- }).join('');
+function appliquerFiltres(){
+ const q=normaliser($('recherche').value),st=normaliser($('filtreStatut').value);
+ const filtres=chargementsUnifies.filter(s=>(!q||rechercherDansChargement(s).includes(q))&&(!st||normaliser(s.status)===st));
+ const groupesStatut=new Map();
+ filtres.forEach(s=>{const nom=statut(s.status);if(!groupesStatut.has(nom))groupesStatut.set(nom,[]);groupesStatut.get(nom).push(s)});
+ const noms=Array.from(groupesStatut.keys()).sort((a,b)=>{
+  const ia=STATUTS_ORDRE.findIndex(x=>normaliser(x)===normaliser(a)),ib=STATUTS_ORDRE.findIndex(x=>normaliser(x)===normaliser(b));
+  return (ia<0?999:ia)-(ib<0?999:ib)||a.localeCompare(b,'fr');
+ });
+ $('countChargements').textContent=filtres.length+' chargement(s)';
+ if(!filtres.length){$('chargements').innerHTML='<div class="empty">Aucun chargement ne correspond à votre recherche.</div>';return;}
+ $('chargements').innerHTML=noms.map(nom=>{const liste=groupesStatut.get(nom);return `<section class="status-group"><div class="status-group-head"><h3>${safe(nom)}</h3><span class="count">${liste.length} chargement(s)</span></div><div class="status-cards">${liste.map(afficherChargement).join('')}</div></section>`}).join('');
 }
 async function charger(){
  $('message').textContent='Chargement des importations depuis Supabase…';
  const dossiersRes=await db.from('shipment_consultation_public').select('*');
- if(dossiersRes.error){$('message').textContent='Erreur de lecture des dossiers (shipment_consultation_public) : '+dossiersRes.error.message;return;}
- tousLesDossiers=(dossiersRes.data||[]);
+ if(dossiersRes.error){$('message').textContent='Erreur de lecture des chargements (shipment_consultation_public) : '+dossiersRes.error.message;return;}
+ tousLesDossiers=dossiersRes.data||[];
  const groupagesRes=await db.from('groupages_consultation_public').select('*').order('load_date',{ascending:false});
- if(groupagesRes.error){
-  console.error('Erreur de lecture des groupages',groupagesRes.error);
-  groupageDisponible=false;tousLesGroupages=[];liensGroupage=[];
- }else{
-  liensGroupage=groupagesRes.data||[];
-  const groupesUniques=new Map();
-  liensGroupage.forEach(x=>{
-   if(!groupesUniques.has(x.group_id))groupesUniques.set(x.group_id,{id:x.group_id,group_reference:x.group_reference,transport_mode:x.transport_mode,transport_unit_reference:x.transport_unit_reference,transporter:x.transporter,origin:x.origin,destination:x.destination,load_date:x.load_date,status:x.group_status});
-  });
-  tousLesGroupages=Array.from(groupesUniques.values());
- }
- $('message').textContent=`${tousLesDossiers.length} dossier(s) chargé(s) · ${tousLesGroupages.length} groupage(s) · ${liensGroupage.length} ligne(s) fournisseur${groupageDisponible?'':' (groupages indisponibles)'}.`;
+ if(groupagesRes.error){console.error('Erreur de lecture des groupages',groupagesRes.error);groupageDisponible=false;lignesGroupage=[];}
+ else{groupageDisponible=true;lignesGroupage=groupagesRes.data||[];}
+ construireChargementsUnifies();
+ $('message').textContent=`${chargementsUnifies.length} chargement(s) affiché(s) · ${chargementsUnifies.filter(s=>s._groupage).length} en groupage · ${chargementsUnifies.filter(s=>!s._groupage).length} individuel(s)`+(groupageDisponible?'':' · Les informations de rattachement aux groupages sont temporairement indisponibles.');
  $('lastUpdate').textContent='Actualisé le '+new Date().toLocaleString('fr-FR');
  appliquerFiltres();
 }
 $('recherche').addEventListener('input',appliquerFiltres);
 $('filtreStatut').addEventListener('change',appliquerFiltres);
-$('reinitialiser').addEventListener('click',()=>{$('recherche').value='';$('filtreStatut').value='';appliquerFiltres();});
+$('reinitialiser').addEventListener('click',()=>{$('recherche').value='';$('filtreStatut').value='';appliquerFiltres()});
 charger();
 </script>
 </body>
