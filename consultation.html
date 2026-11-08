@@ -1,168 +1,1227 @@
+```html
 <!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Suivi des importations — Consultation</title>
+
 <style>
-:root{--navy:#17365d;--blue:#3157d5;--bg:#f4f6f9;--ink:#263445;--muted:#68778b;--line:#dce3ec}
-*{box-sizing:border-box}body{font-family:Arial,sans-serif;margin:0;background:var(--bg);color:var(--ink)}
-.container{max-width:1250px;margin:auto;padding:24px 18px 40px}
-header{display:flex;justify-content:space-between;align-items:flex-end;gap:15px;flex-wrap:wrap}
-h1,h2,h3{color:var(--navy)}h1{font-size:26px;margin:0 0 6px}header p{margin:0;color:var(--muted)}
-#message{padding:12px 14px;margin:16px 0;border-radius:8px;background:#e8eef7;color:var(--navy)}
-.filtres{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0}
-.filtres input,.filtres select,.filtres button{padding:11px 12px;border:1px solid #cbd5e1;border-radius:7px;font-size:14px}
-.filtres input{flex:2;min-width:230px}.filtres select{min-width:190px}
-button{cursor:pointer}.filtres button,.btn{background:var(--navy);color:#fff;border:0;border-radius:7px;padding:10px 14px}
-.section{margin-top:24px}.section-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
-.section-head h2{font-size:20px;margin:0}.count{font-size:13px;color:var(--muted)}
-#groupages,#dossiers{display:grid;grid-template-columns:1fr;gap:13px}
-.card{background:white;border:1px solid var(--line);border-radius:12px;padding:17px;box-shadow:0 2px 7px #00000009}
-.card h3{margin:0 0 12px;font-size:17px}
-.infos{display:flex;gap:9px 22px;flex-wrap:wrap;margin:10px 0 14px;font-size:14px}
-.infos span{color:#435166}.infos strong{color:#263445}
-.status{display:inline-block;padding:5px 10px;border-radius:20px;background:#e8eef7;color:var(--navy);font-weight:bold;font-size:12px}
-.group-members{margin-top:13px;padding-top:12px;border-top:1px solid var(--line)}
-.member{padding:12px;margin:9px 0;background:#f8faff;border:1px solid #e3eaf4;border-radius:8px}
-.member h4{margin:0 0 7px;color:var(--navy)}
-.member p{margin:5px 0;font-size:13px}
-.articles{width:100%;border-collapse:collapse;margin-top:8px;min-width:500px}
-.articles th,.articles td{padding:8px;border-bottom:1px solid #dce3ec;text-align:left;font-size:13px}
-.articles th{background:#eaf0f7;color:var(--navy)}
-.table-scroll{overflow-x:auto}
-.empty{padding:20px;background:white;border:1px dashed #cbd5e1;border-radius:10px;color:var(--muted)}
-.hidden{display:none}
-@media(max-width:620px){.container{padding:18px 12px}.infos{flex-direction:column;gap:7px}.filtres input,.filtres select{width:100%;min-width:100%}.section-head{align-items:flex-start;flex-direction:column}}
+:root{
+  --navy:#17365d;
+  --blue:#3157d5;
+  --bg:#f2f5fa;
+  --ink:#263445;
+  --muted:#68778b;
+  --line:#dce3ec;
+}
 
-.status-group{margin:0 0 22px}
-.status-group-head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 13px;margin-bottom:10px;background:#e8eef7;border-left:4px solid var(--blue);border-radius:8px}
-.status-group-head h3{font-size:17px;margin:0}
-.status-cards{display:grid;grid-template-columns:1fr;gap:12px}
-.card-title-line{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
-.card-title-line h3{margin:0;font-size:17px}
-.groupage-info{padding:9px 11px;background:#f1f5fb;border-radius:7px;font-size:13px;color:#435166}
-.muted{color:var(--muted);font-size:13px}
-.status[data-status="Livré"],.status[data-status="Livrée"]{background:#dcfce7;color:#166534}
-.status[data-status="Bloqué"]{background:#fee2e2;color:#991b1b}
-.status[data-status="En transit"]{background:#fef3c7;color:#92400e}
+*{box-sizing:border-box}
 
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:var(--bg);
+  color:var(--ink);
+}
+
+.container{
+  width:100%;
+  max-width:1450px;
+  margin:auto;
+  padding:22px;
+}
+
+header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:15px;
+  flex-wrap:wrap;
+  background:linear-gradient(120deg,#17365d,#3157d5);
+  color:white;
+  padding:23px;
+  border-radius:14px;
+  box-shadow:0 4px 14px #17365d20;
+}
+
+header h1{
+  color:white;
+  font-size:26px;
+  margin:0 0 7px;
+}
+
+header p{
+  color:#e4edff;
+  margin:0;
+  font-size:14px;
+}
+
+#lastUpdate{
+  font-size:12px;
+  color:#e4edff;
+}
+
+#message{
+  padding:13px 16px;
+  margin:16px 0;
+  border-radius:9px;
+  background:#e8eef7;
+  color:var(--navy);
+  font-size:14px;
+  line-height:1.5;
+  overflow-wrap:anywhere;
+}
+
+.filters{
+  display:grid;
+  grid-template-columns:minmax(200px,1fr) auto;
+  gap:10px;
+  margin:17px 0;
+}
+
+.filters input{
+  width:100%;
+  min-width:0;
+  padding:13px;
+  border:1px solid #cbd5e1;
+  border-radius:9px;
+  font-size:14px;
+  background:white;
+  outline:none;
+}
+
+.filters input:focus{
+  border-color:var(--blue);
+  box-shadow:0 0 0 3px #3157d520;
+}
+
+button{cursor:pointer;font-family:inherit}
+
+.reset-btn{
+  padding:12px 17px;
+  border:0;
+  border-radius:9px;
+  color:white;
+  background:var(--navy);
+  font-weight:bold;
+}
+
+.reset-btn:hover{background:var(--blue)}
+
+/* Cartes interactives */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px;
+  margin:17px 0;
+}
+
+.stat{
+  display:block;
+  width:100%;
+  text-align:left;
+  background:white;
+  border:1px solid var(--line);
+  border-radius:11px;
+  padding:15px;
+  box-shadow:0 2px 6px #00000008;
+  min-width:0;
+  color:var(--ink);
+  transition:.2s;
+}
+
+.stat:hover{
+  transform:translateY(-2px);
+  box-shadow:0 5px 14px #00000012;
+  border-color:var(--blue);
+}
+
+.stat.active{
+  border:2px solid var(--blue);
+  background:#edf3ff;
+  box-shadow:0 0 0 3px #3157d51a;
+}
+
+.stat-label{
+  color:var(--muted);
+  font-size:12px;
+  margin-bottom:8px;
+}
+
+.stat-value{
+  font-size:25px;
+  font-weight:bold;
+  color:var(--navy);
+}
+
+.stat-hint{
+  font-size:10px;
+  color:var(--muted);
+  margin-top:7px;
+}
+
+.tabs-wrap{
+  margin:20px 0;
+  background:white;
+  border:1px solid var(--line);
+  border-radius:11px;
+  padding:12px;
+}
+
+.tabs-title{
+  font-weight:bold;
+  color:var(--navy);
+  font-size:14px;
+  margin-bottom:10px;
+}
+
+.tabs{
+  display:flex;
+  gap:8px;
+  overflow-x:auto;
+  padding-bottom:4px;
+  scrollbar-width:thin;
+}
+
+.tab{
+  flex:0 0 auto;
+  border:1px solid var(--line);
+  background:#f8fafc;
+  color:#435166;
+  border-radius:20px;
+  padding:9px 14px;
+  font-size:12px;
+  font-weight:bold;
+  white-space:nowrap;
+}
+
+.tab.active{
+  background:var(--navy);
+  border-color:var(--navy);
+  color:white;
+}
+
+.tab-count{margin-left:5px;opacity:.8}
+
+.section-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:10px;
+  margin:23px 0 12px;
+}
+
+.section-head h2{
+  font-size:20px;
+  color:var(--navy);
+  margin:0;
+}
+
+.count{color:var(--muted);font-size:13px}
+
+.status-group{margin-bottom:24px}
+
+.status-group-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  padding:12px 15px;
+  margin-bottom:12px;
+  background:#e4ecfa;
+  border-left:5px solid var(--blue);
+  border-radius:8px;
+}
+
+.status-group-head h3{
+  margin:0;
+  color:var(--navy);
+  font-size:16px;
+}
+
+.status-cards{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+}
+
+.card{
+  min-width:0;
+  background:white;
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:17px;
+  box-shadow:0 3px 10px #00000009;
+  border-top:4px solid var(--blue);
+}
+
+.card-title-line{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-bottom:13px;
+}
+
+.reference{
+  color:var(--navy);
+  font-size:17px;
+  font-weight:bold;
+  overflow-wrap:anywhere;
+}
+
+.supplier{
+  display:block;
+  color:#435166;
+  font-size:14px;
+  font-weight:bold;
+  margin-top:5px;
+  overflow-wrap:anywhere;
+}
+
+.status{
+  display:inline-block;
+  padding:6px 11px;
+  border-radius:20px;
+  font-size:11px;
+  font-weight:bold;
+  background:#e8eef7;
+  color:var(--navy);
+  white-space:normal;
+}
+
+.status[data-status="Livré"],
+.status[data-status="Livrée"]{
+  background:#dcfce7;color:#166534;
+}
+
+.status[data-status="Bloqué"],
+.status[data-status="Annulée"]{
+  background:#fee2e2;color:#991b1b;
+}
+
+.status[data-status="En transit"],
+.status[data-status="Chargé"]{
+  background:#fef3c7;color:#92400e;
+}
+
+.status[data-status="Dédouanement"]{
+  background:#f3e8ff;color:#6b21a8;
+}
+
+.status[data-status="En livraison"]{
+  background:#dbeafe;color:#1e40af;
+}
+
+.status[data-status="Arrivé au port"]{
+  background:#cffafe;color:#155e75;
+}
+
+.status[data-status="Commandée"]{
+  background:#e0e7ff;color:#3730a3;
+}
+
+.status[data-status="En préparation"]{
+  background:#ffedd5;color:#9a3412;
+}
+
+.status[data-status="Non renseigné"]{
+  background:#e5e7eb;color:#374151;
+}
+
+.type-tag{
+  display:inline-block;
+  padding:5px 9px;
+  border-radius:6px;
+  font-size:11px;
+  font-weight:bold;
+  background:#eaf1ff;
+  color:#2549a5;
+  margin-top:7px;
+}
+
+.type-tag.group{
+  background:#f3e8ff;
+  color:#7046a5;
+}
+
+/* Numéro de camion/conteneur et destination sur la même ligne */
+.transport-destination{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:9px;
+  margin:12px 0;
+}
+
+.transport-box{
+  min-width:0;
+  background:#eaf1ff;
+  border:1px solid #d5e2ff;
+  padding:12px;
+  border-radius:9px;
+}
+
+.destination-box{
+  background:#e8f7ee;
+  border-color:#c8ead5;
+}
+
+.transport-label{
+  color:#36558e;
+  font-size:11px;
+  margin-bottom:5px;
+  font-weight:bold;
+}
+
+.destination-box .transport-label{color:#267348}
+
+.transport-value{
+  color:var(--navy);
+  font-size:15px;
+  font-weight:bold;
+  overflow-wrap:anywhere;
+}
+
+.destination-box .transport-value{color:#166534}
+
+.infos{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:9px;
+  margin:13px 0;
+}
+
+.info-box{
+  min-width:0;
+  background:#f7f9fc;
+  border:1px solid #edf0f5;
+  padding:10px;
+  border-radius:8px;
+}
+
+.info-label{
+  color:var(--muted);
+  font-size:11px;
+  margin-bottom:5px;
+}
+
+.info-value{
+  color:var(--ink);
+  font-size:13px;
+  font-weight:bold;
+  overflow-wrap:anywhere;
+}
+
+.groupage-info{
+  background:#f4edff;
+  border:1px solid #e4d6fb;
+  padding:11px;
+  border-radius:8px;
+  margin:12px 0;
+  color:#58358b;
+  font-size:12px;
+  line-height:1.6;
+  overflow-wrap:anywhere;
+}
+
+.articles-title{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:17px;
+  margin-bottom:8px;
+  padding-bottom:8px;
+  border-bottom:2px solid #e5eaf2;
+}
+
+.articles-title strong{
+  color:var(--navy);
+  font-size:14px;
+}
+
+.articles-count{color:var(--muted);font-size:11px}
+
+.articles{
+  width:100%;
+  border-collapse:collapse;
+  table-layout:fixed;
+}
+
+.articles th,.articles td{
+  padding:9px 7px;
+  border-bottom:1px solid #e5eaf2;
+  text-align:left;
+  font-size:12px;
+  overflow-wrap:anywhere;
+}
+
+.articles th{
+  background:#eaf0f8;
+  color:var(--navy);
+  font-size:11px;
+}
+
+.articles th:nth-child(1){width:19%}
+.articles th:nth-child(2){width:43%}
+.articles th:nth-child(3){width:19%}
+.articles th:nth-child(4){width:19%}
+
+.articles tbody tr:nth-child(even){background:#f8fafc}
+
+.article-empty{
+  background:#f8fafc;
+  padding:12px;
+  border-radius:7px;
+  color:var(--muted);
+  font-size:12px;
+}
+
+.total-articles{
+  margin-top:9px;
+  padding:10px;
+  background:#edf5ff;
+  border-radius:7px;
+  color:var(--navy);
+  font-size:12px;
+  font-weight:bold;
+}
+
+.empty{
+  padding:25px;
+  background:white;
+  border:1px dashed #cbd5e1;
+  border-radius:10px;
+  color:var(--muted);
+  text-align:center;
+  line-height:1.6;
+}
+
+/* Tablette */
+@media(max-width:950px){
+  .container{padding:16px}
+  .status-cards{grid-template-columns:1fr}
+}
+
+/* Mobile */
+@media(max-width:600px){
+  .container{padding:10px}
+  header{padding:17px;border-radius:10px}
+  header h1{font-size:21px}
+  header p{font-size:12px}
+  .filters{grid-template-columns:1fr}
+  .reset-btn{width:100%}
+  .stats{gap:8px}
+  .stat{padding:11px}
+  .stat-value{font-size:21px}
+  .stat-label{font-size:11px}
+  .stat-hint{font-size:9px}
+  .tabs-wrap{padding:10px}
+  .section-head h2{font-size:17px}
+  .card{padding:12px}
+  .reference{font-size:15px}
+  .supplier{font-size:13px}
+  .infos{grid-template-columns:1fr 1fr;gap:7px}
+  .info-box{padding:8px}
+  .info-value{font-size:12px}
+  .transport-destination{gap:7px}
+  .transport-box{padding:9px}
+  .transport-value{font-size:13px}
+
+  .articles,.articles tbody,.articles tr,.articles td{
+    display:block;
+    width:100%;
+  }
+
+  .articles thead{display:none}
+
+  .articles tr{
+    border:1px solid #e2e8f0;
+    border-radius:8px;
+    padding:7px;
+    margin-bottom:9px;
+    background:white!important;
+  }
+
+  .articles td{
+    display:grid;
+    grid-template-columns:105px minmax(0,1fr);
+    gap:8px;
+    padding:5px 3px;
+    border-bottom:1px solid #edf0f5;
+    font-size:12px;
+  }
+
+  .articles td:last-child{border-bottom:0}
+
+  .articles td:before{
+    content:attr(data-label);
+    color:var(--muted);
+    font-weight:bold;
+    font-size:11px;
+  }
+}
+
+@media(max-width:360px){
+  .infos{grid-template-columns:1fr}
+  .transport-destination{grid-template-columns:1fr}
+  .articles td{grid-template-columns:85px minmax(0,1fr)}
+}
 </style>
 </head>
+
 <body>
 <div class="container">
-<header><div><h1>Suivi des importations</h1><p>Page de consultation — accès en lecture seule</p></div><div id="lastUpdate" class="count"></div></header>
+
+<header>
+  <div>
+    <h1>Suivi des importations</h1>
+    <p>Consultation des chargements et groupages — Accès en lecture seule</p>
+  </div>
+  <div id="lastUpdate"></div>
+</header>
+
 <div id="message">Connexion à la base de données…</div>
-<div class="filtres">
-<input type="search" id="recherche" placeholder="Rechercher groupage, fournisseur, conteneur, BL, article…">
-<select id="filtreStatut"><option value="">Tous les statuts</option>
-<option>Commandée</option><option>En préparation</option><option>Chargé</option><option>En transit</option><option>Arrivé au port</option><option>Dédouanement</option><option>En livraison</option><option>Livré</option><option>Bloqué</option><option>Annulée</option></select>
-<button type="button" id="reinitialiser">Réinitialiser</button>
+
+<!-- Cartes interactives : le total général est supprimé -->
+<div class="stats">
+
+  <button type="button" class="stat" id="carteIndividuels">
+    <div class="stat-label">Chargements individuels</div>
+    <div class="stat-value" id="statIndividuels">0</div>
+    <div class="stat-hint">Cliquer pour consulter</div>
+  </button>
+
+  <button type="button" class="stat" id="carteGroupages">
+    <div class="stat-label">Chargements en groupage</div>
+    <div class="stat-value" id="statGroupages">0</div>
+    <div class="stat-hint">Cliquer pour consulter</div>
+  </button>
+
+  <button type="button" class="stat" id="carteLivres">
+    <div class="stat-label">Livrés</div>
+    <div class="stat-value" id="statLivres">0</div>
+    <div class="stat-hint">Cliquer pour consulter</div>
+  </button>
+
 </div>
-<section class="section">
-<div class="section-head"><h2>Tous les chargements par statut</h2><span class="count" id="countChargements"></span></div>
-<div id="chargements"><div class="empty">Chargement des chargements…</div></div>
+
+<div class="filters">
+  <input
+    type="search"
+    id="recherche"
+    placeholder="Rechercher fournisseur, référence, conteneur, camion, BL, article..."
+  >
+  <button type="button" class="reset-btn" id="reinitialiser">
+    Réinitialiser
+  </button>
+</div>
+
+<div class="tabs-wrap">
+  <div class="tabs-title">Filtrer par statut</div>
+  <div class="tabs" id="statusTabs"></div>
+</div>
+
+<section>
+  <div class="section-head">
+    <h2 id="titreResultats">Tous les chargements</h2>
+    <span class="count" id="countChargements"></span>
+  </div>
+
+  <div id="chargements">
+    <div class="empty">Chargement des importations…</div>
+  </div>
 </section>
+
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script>
-/* Paramètres Supabase conservés tels quels depuis votre page actuelle. */
+/* Paramètres Supabase conservés tels quels */
 const SUPABASE_URL='https://mnyokiniupvtzesdmwit.supabase.co';
 const KEY='sb_publishable_-HIf7IptcZ1as_TXkn5SCQ_Fx6lPnbi';
+
 const db=window.supabase.createClient(SUPABASE_URL,KEY);
 const $=id=>document.getElementById(id);
 
-let tousLesDossiers=[], lignesGroupage=[], chargementsUnifies=[], groupageDisponible=true;
-const STATUTS_ORDRE=['Commandée','En préparation','Chargé','En transit','Arrivé au port','Dédouanement','En livraison','Livré','Bloqué','Annulée'];
+let tousLesDossiers=[];
+let lignesGroupage=[];
+let chargementsUnifies=[];
+let statutActif='';
+let typeActif='';
+let groupageDisponible=true;
 
-function safe(v){return String(v??'—').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function normaliser(v){return String(v??'').replace(/<br\s*\/?\s*>/gi,' ').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();}
+const STATUTS_ORDRE=[
+  'Commandée',
+  'En préparation',
+  'Chargé',
+  'En transit',
+  'Arrivé au port',
+  'Dédouanement',
+  'En livraison',
+  'Livré',
+  'Bloqué',
+  'Annulée'
+];
+
+function safe(v){
+  return String(v??'—').replace(/[&<>"']/g,c=>({
+    '&':'&amp;',
+    '<':'&lt;',
+    '>':'&gt;',
+    '"':'&quot;',
+    "'":'&#39;'
+  })[c]);
+}
+
+function normaliser(v){
+  return String(v??'')
+    .replace(/<br\s*\/?>/gi,' ')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g,'')
+    .trim()
+    .toLowerCase();
+}
+
+function estLivre(s){
+  const st=normaliser(s.status);
+  return st==='livre'||st==='livree';
+}
+
 function obtenirArticles(s){
- if(Array.isArray(s.articles)&&s.articles.length)return s.articles;
- if(s.article_names||s.articleNames||s.goods)return [{reference:s.article_reference||s.articleReference||'',name:s.article_names||s.articleNames||s.goods,quantity:s.quantity,unit:s.unit}];
- return [];
+  if(Array.isArray(s.articles)&&s.articles.length){
+    return s.articles;
+  }
+
+  if(s.article_names||s.articleNames||s.goods){
+    return [{
+      reference:s.article_reference||s.articleReference||'',
+      name:s.article_names||s.articleNames||s.goods,
+      quantity:s.quantity,
+      unit:s.unit
+    }];
+  }
+
+  return [];
 }
+
 function totalArticles(articles){
- const t={};articles.forEach(a=>{const u=a.unit||'Autre';if(a.quantity!==null&&a.quantity!==undefined&&a.quantity!=='')t[u]=(t[u]||0)+(Number(a.quantity)||0)});
- return Object.entries(t).map(([u,n])=>n.toLocaleString('fr-FR')+' '+u).join(' · ');
+  const totaux={};
+
+  articles.forEach(a=>{
+    const unite=a.unit||'Autre';
+
+    if(a.quantity!==null&&a.quantity!==undefined&&a.quantity!==''){
+      totaux[unite]=(totaux[unite]||0)+(Number(a.quantity)||0);
+    }
+  });
+
+  return Object.entries(totaux)
+    .map(([u,n])=>n.toLocaleString('fr-FR')+' '+u)
+    .join(' · ');
 }
-function statut(s){return s||'Non renseigné';}
+
+function statut(s){
+  return s||'Non renseigné';
+}
+
 function articlesHtml(s){
- const arts=obtenirArticles(s);
- if(!arts.length)return '<p class="muted">Aucun article détaillé.</p>';
- return `<div class="table-scroll"><table class="articles"><thead><tr><th>Référence</th><th>Désignation</th><th>Quantité</th><th>Unité</th></tr></thead><tbody>${arts.map(a=>`<tr><td>${safe(a.reference)}</td><td style="white-space:pre-line">${safe(String(a.name||a.designation||'').replace(/<br\s*\/?\s*>/gi,'\n'))}</td><td>${safe(a.quantity)}</td><td>${safe(a.unit)}</td></tr>`).join('')}</tbody></table></div><p><strong>Total :</strong> ${safe(totalArticles(arts)||'—')}</p>`;
+  const arts=obtenirArticles(s);
+
+  if(!arts.length){
+    return '<div class="article-empty">Aucun article détaillé disponible pour ce chargement.</div>';
+  }
+
+  const lignes=arts.map(a=>`
+    <tr>
+      <td data-label="Référence">${safe(a.reference||'—')}</td>
+      <td data-label="Désignation" style="white-space:pre-line">${safe(String(a.name||a.designation||'').replace(/<br\s*\/?>/gi,'\n'))}</td>
+      <td data-label="Quantité">${safe(a.quantity??'—')}</td>
+      <td data-label="Unité">${safe(a.unit||'—')}</td>
+    </tr>
+  `).join('');
+
+  return `
+    <table class="articles">
+      <thead>
+        <tr>
+          <th>Référence</th>
+          <th>Désignation</th>
+          <th>Quantité</th>
+          <th>Unité</th>
+        </tr>
+      </thead>
+      <tbody>${lignes}</tbody>
+    </table>
+    <div class="total-articles">
+      Total : ${safe(totalArticles(arts)||'Non renseigné')}
+    </div>
+  `;
 }
+
 function rechercherDansChargement(s){
- const arts=obtenirArticles(s);
- return normaliser([s.reference,s.ref,s.supplier,s.container,s.bl,s.invoice,s.status,s.goods,s.article_names,s.origin_port,s.dest_port,s.transporter,s.group_reference,s.transport_mode,s.transport_unit_reference,s.origin,s.destination,...arts.map(a=>[a.reference,a.name,a.designation,a.quantity,a.unit].join(' '))].join(' '));
+  const arts=obtenirArticles(s);
+  const grp=s._groupage||{};
+
+  return normaliser([
+    s.reference,
+    s.ref,
+    s.supplier,
+    s.container,
+    s.bl,
+    s.status,
+    s.goods,
+    s.article_names,
+    s.dest_port,
+    s.destination,
+    s.transporter,
+    s.group_reference,
+    s.transport_mode,
+    s.transport_unit_reference,
+    grp.group_reference,
+    grp.transport_unit_reference,
+    grp.transporter,
+    ...arts.map(a=>[
+      a.reference,
+      a.name,
+      a.designation,
+      a.quantity,
+      a.unit
+    ].join(' '))
+  ].join(' '));
 }
+
 function construireChargementsUnifies(){
- const parId=new Map();
- tousLesDossiers.forEach(s=>{
-  const id=String(s.id??s.reference??s.ref??'');
-  if(id)parId.set(id,{...s,_groupage:null});
- });
- lignesGroupage.forEach(m=>{
-  const id=String(m.shipment_id??m.id??'');
-  if(!id)return;
-  const base=parId.get(id)||{};
-  const rattachement={group_id:m.group_id,group_reference:m.group_reference,transport_mode:m.transport_mode,transport_unit_reference:m.transport_unit_reference,transporter:m.transporter,origin:m.origin,destination:m.destination,group_status:m.group_status,load_date:m.load_date};
-  const membre={
-   ...base,...m,
-   id:m.shipment_id||base.id||m.id,
-   reference:m.supplier_reference||m.reference||base.reference||base.ref,
-   status:m.supplier_status||m.status||base.status||'Non renseigné',
-   supplier:m.supplier||base.supplier,invoice:m.invoice||base.invoice,
-   container:m.container||base.container,bl:m.bl||base.bl,
-   articles:m.articles||base.articles,article_names:m.article_names||base.article_names,
-   goods:m.goods||base.goods,quantity:m.quantity??base.quantity,unit:m.unit||base.unit,
-   _groupage:rattachement
-  };
-  parId.set(id,membre);
- });
- chargementsUnifies=Array.from(parId.values());
+  const parId=new Map();
+
+  tousLesDossiers.forEach(s=>{
+    const id=String(s.id??s.reference??s.ref??'');
+
+    if(id){
+      parId.set(id,{...s,_groupage:null});
+    }
+  });
+
+  lignesGroupage.forEach(m=>{
+    const id=String(m.shipment_id??m.id??'');
+
+    if(!id)return;
+
+    const base=parId.get(id)||{};
+
+    const rattachement={
+      group_id:m.group_id,
+      group_reference:m.group_reference,
+      transport_mode:m.transport_mode,
+      transport_unit_reference:m.transport_unit_reference,
+      transporter:m.transporter,
+      origin:m.origin,
+      destination:m.destination,
+      group_status:m.group_status,
+      load_date:m.load_date
+    };
+
+    const membre={
+      ...base,
+      ...m,
+
+      id:m.shipment_id||base.id||m.id,
+
+      reference:m.supplier_reference||m.reference||base.reference||base.ref,
+
+      status:m.supplier_status||m.status||base.status||'Non renseigné',
+
+      supplier:m.supplier||base.supplier,
+      invoice:m.invoice||base.invoice,
+      container:m.container||base.container,
+      bl:m.bl||base.bl,
+
+      articles:Array.isArray(m.articles)&&m.articles.length
+        ?m.articles
+        :base.articles,
+
+      article_names:m.article_names||base.article_names,
+      goods:m.goods||base.goods,
+      quantity:m.quantity??base.quantity,
+      unit:m.unit||base.unit,
+
+      _groupage:rattachement
+    };
+
+    parId.set(id,membre);
+  });
+
+  chargementsUnifies=Array.from(parId.values());
 }
+
+function info(label,value){
+  if(value===null||value===undefined||String(value).trim()===''){
+    return '';
+  }
+
+  return `
+    <div class="info-box">
+      <div class="info-label">${safe(label)}</div>
+      <div class="info-value">${safe(value)}</div>
+    </div>
+  `;
+}
+
 function afficherChargement(s){
- const arts=obtenirArticles(s),grp=s._groupage;
- const reference=s.reference||s.ref||'Chargement sans référence';
- const groupHtml=grp?`<span><strong>Groupage transport :</strong> ${safe(grp.group_reference||'Groupage')}</span>`:`<span><strong>Type :</strong> Chargement individuel</span>`;
- const groupDetails=grp?`<p class="groupage-info">Rattaché au groupage <strong>${safe(grp.group_reference||'—')}</strong>${grp.transport_unit_reference?' · '+safe(grp.transport_unit_reference):''}${grp.transporter?' · '+safe(grp.transporter):''}</p>`:'';
- return `<article class="card">
-  <div class="card-title-line"><h3>${safe(reference)} — ${safe(s.supplier||'Fournisseur non précisé')}</h3><span class="status" data-status="${safe(s.status)}">${safe(statut(s.status))}</span></div>
-  <div class="infos"><span><strong>Conteneur :</strong> ${safe(s.container)}</span><span><strong>BL :</strong> ${safe(s.bl)}</span><span><strong>Facture :</strong> ${safe(s.invoice)}</span>${groupHtml}${s.transporter?`<span><strong>Transitaire :</strong> ${safe(s.transporter)}</span>`:''}${s.origin_port||s.origin?`<span><strong>Origine :</strong> ${safe(s.origin_port||s.origin)}</span>`:''}${s.dest_port||s.destination?`<span><strong>Destination :</strong> ${safe(s.dest_port||s.destination)}</span>`:''}</div>
-  ${groupDetails}<p><strong>${arts.length}</strong> article(s) · ${safe(totalArticles(arts)||'Total non renseigné')}</p>${articlesHtml(s)}
- </article>`;
+  const arts=obtenirArticles(s);
+  const grp=s._groupage;
+  const reference=s.reference||s.ref||'Chargement sans référence';
+
+  const mode=String(s.transport_mode||grp?.transport_mode||'').toLowerCase();
+  const routier=mode.includes('rout');
+
+  let numeroTransport='';
+  let labelTransport='N° de transport';
+
+  if(routier){
+    numeroTransport=
+      grp?.transport_unit_reference||
+      s.transport_unit_reference||
+      s.truck_number||
+      s.truck||
+      s.container||
+      '';
+
+    labelTransport='N° camion';
+  }else{
+    numeroTransport=
+      s.container||
+      s.transport_unit_reference||
+      grp?.transport_unit_reference||
+      '';
+
+    labelTransport='N° conteneur';
+  }
+
+  const destination=s.dest_port||s.destination||grp?.destination||'';
+
+  const typeHtml=grp
+    ?'<span class="type-tag group">CHARGEMENT EN GROUPAGE</span>'
+    :'<span class="type-tag">CHARGEMENT INDIVIDUEL</span>';
+
+  const groupDetails=grp?`
+    <div class="groupage-info">
+      <strong>Groupage :</strong>
+      ${safe(grp.group_reference||'Référence non renseignée')}
+      ${grp.transport_mode?' · '+safe(grp.transport_mode):''}
+      ${grp.transporter?' · Transporteur : '+safe(grp.transporter):''}
+    </div>
+  `:'';
+
+  const transportHtml=`
+    <div class="transport-destination">
+
+      <div class="transport-box">
+        <div class="transport-label">${safe(labelTransport)}</div>
+        <div class="transport-value">${safe(numeroTransport)}</div>
+      </div>
+
+      <div class="transport-box destination-box">
+        <div class="transport-label">Destination</div>
+        <div class="transport-value">${safe(destination)}</div>
+      </div>
+
+    </div>
+  `;
+
+  return `
+    <article class="card">
+
+      <div class="card-title-line">
+        <div>
+          <div class="reference">${safe(reference)}</div>
+          <span class="supplier">${safe(s.supplier||'Fournisseur non précisé')}</span>
+          ${typeHtml}
+        </div>
+
+        <span class="status" data-status="${safe(statut(s.status))}">
+          ${safe(statut(s.status))}
+        </span>
+      </div>
+
+      ${transportHtml}
+
+      <div class="infos">
+        ${info('N° BL',s.bl)}
+        ${info('Mode de transport',s.transport_mode||grp?.transport_mode)}
+        ${info('Transitaire / Transporteur',s.transporter||grp?.transporter)}
+      </div>
+
+      ${groupDetails}
+
+      <div class="articles-title">
+        <strong>Articles du chargement</strong>
+        <span class="articles-count">${arts.length} article(s)</span>
+      </div>
+
+      ${articlesHtml(s)}
+
+    </article>
+  `;
 }
+
+/* Statistiques et cartes interactives */
+function mettreAJourStatistiques(){
+  $('statIndividuels').textContent=
+    chargementsUnifies.filter(s=>!s._groupage).length;
+
+  $('statGroupages').textContent=
+    chargementsUnifies.filter(s=>!!s._groupage).length;
+
+  $('statLivres').textContent=
+    chargementsUnifies.filter(estLivre).length;
+
+  $('carteIndividuels').classList.toggle(
+    'active',typeActif==='individuel'
+  );
+
+  $('carteGroupages').classList.toggle(
+    'active',typeActif==='groupage'
+  );
+
+  $('carteLivres').classList.toggle(
+    'active',typeActif==='livre'
+  );
+}
+
+function listeFiltree(){
+  const q=normaliser($('recherche').value);
+
+  return chargementsUnifies.filter(s=>{
+    const rechercheOk=!q||rechercherDansChargement(s).includes(q);
+
+    const statutOk=
+      !statutActif||
+      normaliser(s.status)===normaliser(statutActif);
+
+    let typeOk=true;
+
+    if(typeActif==='individuel'){
+      typeOk=!s._groupage;
+    }else if(typeActif==='groupage'){
+      typeOk=!!s._groupage;
+    }else if(typeActif==='livre'){
+      typeOk=estLivre(s);
+    }
+
+    return rechercheOk&&statutOk&&typeOk;
+  });
+}
+
+function afficherOnglets(){
+  const compte={};
+
+  chargementsUnifies.forEach(s=>{
+    const nom=statut(s.status);
+    compte[nom]=(compte[nom]||0)+1;
+  });
+
+  const noms=Object.keys(compte).sort((a,b)=>{
+    const ia=STATUTS_ORDRE.findIndex(x=>normaliser(x)===normaliser(a));
+    const ib=STATUTS_ORDRE.findIndex(x=>normaliser(x)===normaliser(b));
+
+    return (ia<0?999:ia)-(ib<0?999:ib)||a.localeCompare(b,'fr');
+  });
+
+  const onglets=[
+    `<button class="tab ${statutActif===''?'active':''}" data-statut="">
+      Tous <span class="tab-count">${chargementsUnifies.length}</span>
+    </button>`
+  ];
+
+  noms.forEach(nom=>{
+    onglets.push(`
+      <button class="tab ${normaliser(statutActif)===normaliser(nom)?'active':''}" data-statut="${safe(nom)}">
+        ${safe(nom)}
+        <span class="tab-count">${compte[nom]}</span>
+      </button>
+    `);
+  });
+
+  $('statusTabs').innerHTML=onglets.join('');
+
+  $('statusTabs').querySelectorAll('.tab').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      statutActif=btn.dataset.statut||'';
+      afficherOnglets();
+      appliquerFiltres();
+    });
+  });
+}
+
 function appliquerFiltres(){
- const q=normaliser($('recherche').value),st=normaliser($('filtreStatut').value);
- const filtres=chargementsUnifies.filter(s=>(!q||rechercherDansChargement(s).includes(q))&&(!st||normaliser(s.status)===st));
- const groupesStatut=new Map();
- filtres.forEach(s=>{const nom=statut(s.status);if(!groupesStatut.has(nom))groupesStatut.set(nom,[]);groupesStatut.get(nom).push(s)});
- const noms=Array.from(groupesStatut.keys()).sort((a,b)=>{
-  const ia=STATUTS_ORDRE.findIndex(x=>normaliser(x)===normaliser(a)),ib=STATUTS_ORDRE.findIndex(x=>normaliser(x)===normaliser(b));
-  return (ia<0?999:ia)-(ib<0?999:ib)||a.localeCompare(b,'fr');
- });
- $('countChargements').textContent=filtres.length+' chargement(s)';
- if(!filtres.length){$('chargements').innerHTML='<div class="empty">Aucun chargement ne correspond à votre recherche.</div>';return;}
- $('chargements').innerHTML=noms.map(nom=>{const liste=groupesStatut.get(nom);return `<section class="status-group"><div class="status-group-head"><h3>${safe(nom)}</h3><span class="count">${liste.length} chargement(s)</span></div><div class="status-cards">${liste.map(afficherChargement).join('')}</div></section>`}).join('');
+  const filtres=listeFiltree();
+
+  let titre='Tous les chargements';
+
+  if(typeActif==='individuel'){
+    titre='Chargements individuels';
+  }else if(typeActif==='groupage'){
+    titre='Chargements en groupage';
+  }else if(typeActif==='livre'){
+    titre='Chargements livrés';
+  }
+
+  if(statutActif){
+    titre+=' — '+statutActif;
+  }
+
+  $('titreResultats').textContent=titre;
+
+  $('countChargements').textContent=
+    filtres.length+' chargement(s)';
+
+  if(!filtres.length){
+    $('chargements').innerHTML=`
+      <div class="empty">
+        Aucun chargement ne correspond à votre recherche.
+        <br>Essayez un autre filtre ou un autre mot-clé.
+      </div>
+    `;
+    return;
+  }
+
+  const groupesStatut=new Map();
+
+  filtres.forEach(s=>{
+    const nom=statut(s.status);
+
+    if(!groupesStatut.has(nom)){
+      groupesStatut.set(nom,[]);
+    }
+
+    groupesStatut.get(nom).push(s);
+  });
+
+  const noms=Array.from(groupesStatut.keys()).sort((a,b)=>{
+    const ia=STATUTS_ORDRE.findIndex(x=>normaliser(x)===normaliser(a));
+    const ib=STATUTS_ORDRE.findIndex(x=>normaliser(x)===normaliser(b));
+
+    return (ia<0?999:ia)-(ib<0?999:ib)||a.localeCompare(b,'fr');
+  });
+
+  $('chargements').innerHTML=noms.map(nom=>{
+    const liste=groupesStatut.get(nom);
+
+    return `
+      <section class="status-group">
+        <div class="status-group-head">
+          <h3>${safe(nom)}</h3>
+          <span class="count">${liste.length} chargement(s)</span>
+        </div>
+
+        <div class="status-cards">
+          ${liste.map(afficherChargement).join('')}
+        </div>
+      </section>
+    `;
+  }).join('');
 }
+
+/* Actions des trois cartes */
+function activerType(type){
+  typeActif=typeActif===type?'':type;
+
+  statutActif='';
+
+  afficherOnglets();
+  mettreAJourStatistiques();
+  appliquerFiltres();
+}
+
+$('carteIndividuels').addEventListener('click',()=>{
+  activerType('individuel');
+});
+
+$('carteGroupages').addEventListener('click',()=>{
+  activerType('groupage');
+});
+
+$('carteLivres').addEventListener('click',()=>{
+  activerType('livre');
+});
+
 async function charger(){
- $('message').textContent='Chargement des importations depuis Supabase…';
- const dossiersRes=await db.from('shipment_consultation_public').select('*');
- if(dossiersRes.error){$('message').textContent='Erreur de lecture des chargements (shipment_consultation_public) : '+dossiersRes.error.message;return;}
- tousLesDossiers=dossiersRes.data||[];
- const groupagesRes=await db.from('groupages_consultation_public').select('*').order('load_date',{ascending:false});
- if(groupagesRes.error){console.error('Erreur de lecture des groupages',groupagesRes.error);groupageDisponible=false;lignesGroupage=[];}
- else{groupageDisponible=true;lignesGroupage=groupagesRes.data||[];}
- construireChargementsUnifies();
- $('message').textContent=`${chargementsUnifies.length} chargement(s) affiché(s) · ${chargementsUnifies.filter(s=>s._groupage).length} en groupage · ${chargementsUnifies.filter(s=>!s._groupage).length} individuel(s)`+(groupageDisponible?'':' · Les informations de rattachement aux groupages sont temporairement indisponibles.');
- $('lastUpdate').textContent='Actualisé le '+new Date().toLocaleString('fr-FR');
- appliquerFiltres();
+  $('message').textContent=
+    'Chargement des importations depuis Supabase…';
+
+  try{
+    const dossiersRes=await db
+      .from('shipment_consultation_public')
+      .select('*');
+
+    if(dossiersRes.error){
+      $('message').textContent=
+        'Erreur de lecture des chargements : '+dossiersRes.error.message;
+      return;
+    }
+
+    tousLesDossiers=dossiersRes.data||[];
+
+    const groupagesRes=await db
+      .from('groupages_consultation_public')
+      .select('*')
+      .order('load_date',{ascending:false});
+
+    if(groupagesRes.error){
+      console.error('Erreur de lecture des groupages',groupagesRes.error);
+      groupageDisponible=false;
+      lignesGroupage=[];
+    }else{
+      groupageDisponible=true;
+      lignesGroupage=groupagesRes.data||[];
+    }
+
+    construireChargementsUnifies();
+
+    mettreAJourStatistiques();
+    afficherOnglets();
+
+    $('message').textContent=
+      chargementsUnifies.length+' chargement(s) affiché(s) · '+
+      chargementsUnifies.filter(s=>s._groupage).length+
+      ' en groupage · '+
+      chargementsUnifies.filter(s=>!s._groupage).length+
+      ' individuel(s)'+
+      (groupageDisponible?'':' · Informations de groupage temporairement indisponibles.');
+
+    $('lastUpdate').textContent=
+      'Actualisé le '+new Date().toLocaleString('fr-FR');
+
+    appliquerFiltres();
+
+  }catch(error){
+    console.error(error);
+
+    $('message').textContent=
+      'Erreur de connexion à Supabase : '+error.message;
+  }
 }
+
 $('recherche').addEventListener('input',appliquerFiltres);
-$('filtreStatut').addEventListener('change',appliquerFiltres);
-$('reinitialiser').addEventListener('click',()=>{$('recherche').value='';$('filtreStatut').value='';appliquerFiltres()});
+
+$('reinitialiser').addEventListener('click',()=>{
+  $('recherche').value='';
+  statutActif='';
+  typeActif='';
+  afficherOnglets();
+  mettreAJourStatistiques();
+  appliquerFiltres();
+});
+
 charger();
 </script>
 </body>
 </html>
+```
