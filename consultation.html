@@ -495,7 +495,7 @@ button{cursor:pointer}
 
 <div class="filters">
  <input type="search" id="recherche"
-  placeholder="Rechercher référence, fournisseur, camion, conteneur, BL, article…">
+ placeholder="Rechercher référence, fournisseur, commercial, camion, conteneur, BL, article…"
  <button type="button" class="btn" id="reinitialiser">Réinitialiser</button>
 </div>
 
@@ -592,7 +592,8 @@ function articlesHtml(s){
 function rechercherDansDossier(s){
  const arts=obtenirArticles(s);
  return normaliser([
-  s.reference,s.ref,s.supplier,s.container,s.bl,s.invoice,
+  s.reference,s.ref,s.supplier,s.commercial,
+  s.container,s.bl,s.invoice,
   s.goods,s.article_names,s.origin_port,s.dest_port,
   s.transporter,s.transport_unit_reference,
   ...arts.map(a=>[a.reference,a.name,a.designation,a.quantity,a.unit].join(' '))
@@ -655,9 +656,13 @@ function construireChargementsUnifies(){
    ?m.articles
    :base.articles;
 
-  const membre={
+    const membre={
    ...base,...m,
    id:shipmentId,
+
+   // Le commercial vient toujours du dossier individuel
+   commercial:base.commercial||m.commercial||'',
+
    reference:m.supplier_reference||base.reference||base.ref||m.reference,
    supplier:m.supplier||base.supplier,
    invoice:m.invoice||base.invoice,
@@ -700,6 +705,8 @@ function afficherGroupe(g){
   <div class="member">
    <h4>Dossier ${i+1} — ${safe(m.reference||m.ref||'Sans référence')}</h4>
    <p><strong>Fournisseur :</strong> ${safe(m.supplier||'Non précisé')}</p>
+      <p><strong>Commercial responsable :</strong>
+      ${safe(m.commercial||'Non renseigné')}</p>
    <p><strong>Facture :</strong> ${safe(m.invoice)} · <strong>BL :</strong> ${safe(m.bl)}</p>
    <p><strong>${obtenirArticles(m).length}</strong> article(s) ·
       ${safe(totalArticles(obtenirArticles(m))||'Total non renseigné')}</p>
@@ -774,6 +781,8 @@ function afficherIndividuel(s){
   </div>
 
   <p><strong>BL :</strong> ${safe(s.bl)}</p>
+    <p><strong>Commercial responsable :</strong>
+     ${safe(s.commercial||'Non renseigné')}</p>
   <p><strong>${obtenirArticles(s).length}</strong> article(s) ·
    ${safe(totalArticles(obtenirArticles(s))||'Total non renseigné')}</p>
   ${articlesHtml(s)}
