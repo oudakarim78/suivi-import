@@ -951,14 +951,17 @@ $('recherche').addEventListener('input',()=>{
  construireOngletsStatut();
  appliquerFiltres();
 });
-
 /* Réinitialisation */
-$('reinitialiser').addEventListener('click',()=>{
- $('recherche').value='';
- statutActif='';
- construireOngletsStatut();
- appliquerFiltres();
-});
+const boutonReinitialiser = $('reinitialiser');
+
+if (boutonReinitialiser) {
+  boutonReinitialiser.addEventListener('click', () => {
+    $('recherche').value = '';
+    statutActif = '';
+    construireOngletsStatut();
+    appliquerFiltres();
+  });
+}
 
 charger();
 </script>
