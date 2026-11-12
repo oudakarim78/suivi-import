@@ -80,7 +80,7 @@ body.consultant .table-wrap table{min-width:680px}
   </section>
 
   <section class="main-card">
-    <div class="list-head"><div><h3>Mes chargements</h3><div class="count" id="listCount">0 chargement</div></div><div class="tools"><div class="searchbox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4 4"/></svg><input class="field-control" id="search" placeholder="Référence, fournisseur, article, conteneur…" aria-label="Rechercher" /></div><select class="field-control" id="statusFilter" aria-label="Filtrer par statut"><option value="">Tous les statuts</option></select><select class="field-control" id="sortFilter" aria-label="Trier"><option value="eta">Trier : arrivée prévue</option><option value="newest">Plus récents</option><option value="supplier">Fournisseur A–Z</option></select></div></div>
+    <div class="list-head"><div><h3 id="shipmentListTitle">Mes chargements</h3><div class="count" id="listCount">0 chargement</div></div><div class="tools"><div class="searchbox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4 4"/></svg><input class="field-control" id="search" placeholder="Référence, fournisseur, article, conteneur…" aria-label="Rechercher" /></div><select class="field-control" id="statusFilter" aria-label="Filtrer par statut"><option value="">Tous les statuts</option></select><select class="field-control" id="sortFilter" aria-label="Trier"><option value="eta">Trier : arrivée prévue</option><option value="newest">Plus récents</option><option value="supplier">Fournisseur A–Z</option></select></div></div>
     <div class="filters"><select class="field-control" id="modeFilter" aria-label="Filtrer par transport"><option value="">Tous les transports</option><option>Maritime</option><option>Routier</option><option>Aérien</option><option>Autre</option></select><button class="btn small" id="resetFilters">Réinitialiser les filtres</button></div>
     <div class="table-wrap"><table><thead id="shipmentHead"><tr><th>Fournisseur</th><th>Référence article</th><th>Quantité</th><th>BL / Conteneur</th><th>Statut</th></tr></thead><tbody id="shipmentRows"></tbody></table></div>
     <div class="empty" id="emptyState"><div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 7.5 12 3l9 4.5-9 4.5-9-4.5Z"/><path d="M3 12l9 4.5 9-4.5M3 16.5 12 21l9-4.5M12 12v9"/></svg></div><strong>Aucun chargement pour le moment</strong>Ajoutez votre premier chargement pour commencer le suivi.<br><button class="btn primary" style="margin-top:15px" id="emptyAdd">+ Ajouter un chargement</button></div>
@@ -381,22 +381,78 @@ function isInTransit(s){return ['Chargé','En transit','Arrivé au port'].includ
 function notify(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2600)}
 function setStatusOptions(){ const opts=STATUSES.map(s=>`<option>${escapeHtml(s)}</option>`).join(''); $('fStatus').innerHTML=opts; $('gStatus').innerHTML=opts; $('statusFilter').innerHTML='<option value="">Tous les statuts</option>'+opts }
 let overviewQuickFilter = null;
+function dashboardGroupRow(g){
+ return {
+  __groupage:true, groupId:g.id, id:g.id,
+  ref:g.group_reference||'Groupage', supplier:'Groupage transport',
+  goods:g.transport_mode||'Transport', mode:g.transport_mode||'',
+  container:g.transport_unit_reference||'', bl:'', quantity:'', unit:'',
+  originPort:g.origin||'', destPort:g.destination||'', eta:g.eta||'',
+  actualArrival:'', status:g.status||'Commandée',
+  surestariesStartDate:g.surestaries_start_date||'',
+  terminalOutDate:g.terminal_out_date||'', freeDays:g.free_days??'',
+  dailyRate:g.daily_rate??'', containerCount:g.container_count??1,
+  currency:g.currency||'MAD', updatedAt:g.updated_at||g.created_at||''
+ };
+}
 function render(){
  const groupedIds=new Set((shipmentGroupLinks||[]).map(x=>String(x.shipment_id)));
+ // Les dossiers rattachés sont représentés une seule fois, par leur groupage.
  const standaloneShipments=shipments.filter(s=>!groupedIds.has(String(s.id)));
- const standaloneCount=standaloneShipments.length, orderedCount=standaloneShipments.filter(s=>s.status==='Commandée').length, deliveredCount=standaloneShipments.filter(s=>s.status==='Livré').length;
- const transit=standaloneShipments.filter(isInTransit).length, customs=standaloneShipments.filter(s=>s.status==='Dédouanement').length, late=standaloneShipments.filter(daysLate).length;
- const surestariesActive=shipments.filter(s=>{const c=calcSurestaries(s);return c.ongoing&&c.configured&&c.chargeableDays>0}).length+(shipmentGroups||[]).filter(g=>{const c=calcSurestaries(groupSurestariesData(g));return c.ongoing&&c.configured&&c.chargeableDays>0}).length;
+ const groupRows=(shipmentGroups||[]).map(dashboardGroupRow);
+ const statusRows=[...standaloneShipments,...groupRows];
+ const orderedCount=statusRows.filter(s=>s.status==='Commandée').length;
+ const deliveredCount=statusRows.filter(s=>s.status==='Livré').length;
+ const transit=statusRows.filter(isInTransit).length;
+ const customs=statusRows.filter(s=>s.status==='Dédouanement').length;
+ const late=statusRows.filter(daysLate).length;
+ const surestariesActive=standaloneShipments.filter(s=>{const c=calcSurestaries(s);return c.ongoing&&c.configured&&c.chargeableDays>0}).length+groupRows.filter(g=>{const c=calcSurestaries(g);return c.ongoing&&c.configured&&c.chargeableDays>0}).length;
  const groupedCount=(shipmentGroups||[]).length;
- $('metricActive').textContent=standaloneCount;$('metricOrdered').textContent=orderedCount;$('metricDelivered').textContent=deliveredCount;$('metricTransit').textContent=transit;$('metricCustoms').textContent=customs;$('metricLate').textContent=late;$('lateMetric').classList.toggle('alert',late>0);$('metricSurestaries').textContent=surestariesActive;$('surestariesMetric').classList.toggle('alert',surestariesActive>0);$('metricGrouped').textContent=groupedCount;
+ $('metricActive').textContent=standaloneShipments.length;
+ $('metricOrdered').textContent=orderedCount;
+ $('metricDelivered').textContent=deliveredCount;
+ $('metricTransit').textContent=transit;
+ $('metricCustoms').textContent=customs;
+ $('metricLate').textContent=late;
+ $('lateMetric').classList.toggle('alert',late>0);
+ $('metricSurestaries').textContent=surestariesActive;
+ $('surestariesMetric').classList.toggle('alert',surestariesActive>0);
+ $('metricGrouped').textContent=groupedCount;
  renderAlerts();
- let rows=standaloneShipments.slice();const q=$('search').value.trim().toLocaleLowerCase('fr');const status=$('statusFilter').value;const mode=$('modeFilter').value;
+
+ // Vue normale : dossiers individuels hors groupage. Les raccourcis de statut
+ // basculent vers une liste unifiée : individuels hors groupage + groupages.
+ const statusShortcut=['ordered','delivered','transit','customs','late','surestaries'].includes(overviewQuickFilter);
+ let rows=statusShortcut?statusRows.slice():standaloneShipments.slice();
+ const q=$('search').value.trim().toLocaleLowerCase('fr');
+ const status=$('statusFilter').value;
+ const mode=$('modeFilter').value;
  if(q)rows=rows.filter(s=>[s.ref,s.supplier,s.commercial,s.container,s.bl,s.goods,s.articleNames,s.articleReference,s.country,s.invoice,s.originPort,s.destPort,s.transporter].some(v=>String(v||'').toLocaleLowerCase('fr').includes(q)));
- if(status)rows=rows.filter(s=>s.status===status);if(mode)rows=rows.filter(s=>s.mode===mode);if(overviewQuickFilter==='standalone')rows=rows.filter(s=>!groupedIds.has(String(s.id)));if(overviewQuickFilter==='ordered')rows=rows.filter(s=>s.status==='Commandée');if(overviewQuickFilter==='delivered')rows=rows.filter(s=>s.status==='Livré');if(overviewQuickFilter==='transit')rows=rows.filter(isInTransit);if(overviewQuickFilter==='customs')rows=rows.filter(s=>s.status==='Dédouanement');if(overviewQuickFilter==='late')rows=rows.filter(daysLate);if(overviewQuickFilter==='surestaries')rows=rows.filter(s=>{const c=calcSurestaries(s);return c.ongoing&&c.configured&&c.chargeableDays>0});
- const sort=$('sortFilter').value;if(sort==='eta')rows.sort((a,b)=>(a.eta||'9999').localeCompare(b.eta||'9999'));else if(sort==='newest')rows.sort((a,b)=>(b.updatedAt||b.createdAt||'').localeCompare(a.updatedAt||a.createdAt||''));else rows.sort((a,b)=>(a.supplier||'').localeCompare(b.supplier||'','fr'));
- $('listCount').textContent=`${rows.length} chargement${rows.length!==1?'s':''} affiché${rows.length!==1?'s':''}`;$('footerCount').textContent=`Affichage de ${rows.length} sur ${shipments.length} chargement${shipments.length!==1?'s':''}`;
- $('emptyState').style.display=rows.length?'none':'block';document.querySelector('.table-wrap').style.display=rows.length?'block':'none';
+ if(status)rows=rows.filter(s=>s.status===status);
+ if(mode)rows=rows.filter(s=>s.mode===mode);
+ if(overviewQuickFilter==='standalone')rows=rows.filter(s=>s.status==='Chargé');
+ if(overviewQuickFilter==='ordered')rows=rows.filter(s=>s.status==='Commandée');
+ if(overviewQuickFilter==='delivered')rows=rows.filter(s=>s.status==='Livré');
+ if(overviewQuickFilter==='transit')rows=rows.filter(isInTransit);
+ if(overviewQuickFilter==='customs')rows=rows.filter(s=>s.status==='Dédouanement');
+ if(overviewQuickFilter==='late')rows=rows.filter(daysLate);
+ if(overviewQuickFilter==='surestaries')rows=rows.filter(s=>{const c=calcSurestaries(s);return c.ongoing&&c.configured&&c.chargeableDays>0});
+ const sort=$('sortFilter').value;
+ if(sort==='eta')rows.sort((a,b)=>(a.eta||'9999').localeCompare(b.eta||'9999'));
+ else if(sort==='newest')rows.sort((a,b)=>(b.updatedAt||b.createdAt||'').localeCompare(a.updatedAt||a.createdAt||''));
+ else rows.sort((a,b)=>(a.supplier||'').localeCompare(b.supplier||'','fr'));
+ $('shipmentListTitle').textContent=statusShortcut?'Résultats du raccourci — chargements et groupages':(overviewQuickFilter==='standalone'?'Chargements individuels au statut Chargé':'Mes chargements');
+ $('listCount').textContent=`${rows.length} résultat${rows.length!==1?'s':''} affiché${rows.length!==1?'s':''}`;
+ const totalSource=statusShortcut?statusRows.length:(overviewQuickFilter==='standalone'?standaloneShipments.filter(s=>s.status==='Chargé').length:standaloneShipments.length);
+ $('footerCount').textContent=`Affichage de ${rows.length} sur ${totalSource} élément${totalSource!==1?'s':''}`;
+ $('emptyState').style.display=rows.length?'none':'block';
+ document.querySelector('.table-wrap').style.display=rows.length?'block':'none';
  $('shipmentRows').innerHTML=rows.map(s=>{
+   if(s.__groupage){
+    const route=[s.originPort,s.destPort].filter(Boolean).map(escapeHtml).join(' → ')||'Trajet à préciser';
+    const lateLabel=daysLate(s)?`<span class="late">En retard (${dayDifference(s.eta,todayISO())} j)</span>`:'';
+    return `<tr class="groupage-shortcut-row"><td><div class="ref">${escapeHtml(s.ref)}</div><div class="supplier">Groupage transport</div><div class="subtext">${escapeHtml(s.goods)}</div></td><td><div class="route">${route}</div><div class="subtext">${escapeHtml(s.mode)}</div></td><td><div style="font-weight:650;font-size:12px">${escapeHtml(s.container||'—')}</div><div class="subtext">Groupage</div></td><td><div class="quantity">—</div></td><td><div class="date">${fmtDate(s.eta)}</div>${lateLabel}</td><td>${surestariesLabel(s)}</td><td><span class="status ${STATUS_CLASS[s.status]||'s-commandee'}">${escapeHtml(s.status)}</span></td><td><div class="row-actions"><button class="icon-btn" data-group-action="details" data-id="${escapeHtml(s.groupId)}" title="Détails du groupage" aria-label="Détails">ⓘ</button><button class="icon-btn" data-group-action="edit" data-id="${escapeHtml(s.groupId)}" title="Modifier le groupage" aria-label="Modifier">✎</button><button class="icon-btn" data-group-action="delete" data-id="${escapeHtml(s.groupId)}" title="Supprimer le groupage" aria-label="Supprimer">×</button></div></td></tr>`;
+   }
    const route=[s.originPort,s.destPort].filter(Boolean);const routeText=route.length?route.map(escapeHtml).join(' → '):'Trajet à préciser';
    const quant=s.quantity!==''&&s.quantity!=null?`${Number(s.quantity).toLocaleString('fr-FR',{maximumFractionDigits:2})} <span class="qty-unit">${escapeHtml(s.unit||'m²')}</span>`:'—';
    const lateLabel=daysLate(s)?`<span class="late">En retard (${dayDifference(s.eta,todayISO())} j)</span>`:'';
@@ -742,7 +798,7 @@ function toggleGroupDetails(id){
  const base=document.querySelector(`button[data-group-action="details"][data-id="${CSS.escape(String(id))}"]`)?.closest('tr');if(base)base.after(row);
 }
 async function deleteShipment(id){if(currentRole!=='admin'){notify('Accès en lecture seule.');return}const s=shipments.find(x=>x.id===id);if(!s)return;if(!confirm(`Supprimer le chargement ${s.ref||''} ? Cette action est définitive.`))return;const {error}=await db.from('shipments').delete().eq('id',id);if(error){notify('Erreur Supabase : '+error.message);return}shipments=shipments.filter(x=>x.id!==id);render();closeModal();notify('Chargement supprimé.')}
-$('shipmentRows').addEventListener('click',e=>{if(currentRole!=='admin')return;const b=e.target.closest('button[data-action]');if(!b)return;if(b.dataset.action==='edit')openModal(b.dataset.id);if(b.dataset.action==='delete')deleteShipment(b.dataset.id)});
+$('shipmentRows').addEventListener('click',e=>{if(currentRole!=='admin')return;const groupButton=e.target.closest('button[data-group-action]');if(groupButton){if(groupButton.dataset.groupAction==='details')toggleGroupDetails(groupButton.dataset.id);if(groupButton.dataset.groupAction==='edit')editGroupage(groupButton.dataset.id);if(groupButton.dataset.groupAction==='delete')deleteGroupage(groupButton.dataset.id);return}const b=e.target.closest('button[data-action]');if(!b)return;if(b.dataset.action==='edit')openModal(b.dataset.id);if(b.dataset.action==='delete')deleteShipment(b.dataset.id)});
 $('newShipment').addEventListener('click',()=>openModal());$('emptyAdd').addEventListener('click',()=>openModal());$('closeModal').addEventListener('click',closeModal);$('cancelModal').addEventListener('click',closeModal);$('modalOverlay').addEventListener('click',e=>{if(e.target===$('modalOverlay'))closeModal()});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('modalOverlay').classList.contains('open'))closeModal()});$('deleteShipment').addEventListener('click',()=>{if(editingId)deleteShipment(editingId)});
 ['search','statusFilter','modeFilter','sortFilter'].forEach(id=>$(id).addEventListener(id==='search'?'input':'change',render));
 document.querySelectorAll('.metric-clickable').forEach(card=>{const activate=()=>{const target=card.dataset.metric||card.querySelector('[data-metric]')?.dataset.metric||null;document.querySelectorAll('.metric-clickable').forEach(x=>x.classList.toggle('metric-selected',x===card));if(target==='groupages'){overviewQuickFilter=null;$('search').value='';$('statusFilter').value='';$('modeFilter').value='';render();$('groupageSection').scrollIntoView({behavior:'smooth',block:'start'});return}overviewQuickFilter=target;$('search').value='';$('statusFilter').value='';$('modeFilter').value='';render();document.querySelector('#shipmentRows').closest('.main-card').scrollIntoView({behavior:'smooth',block:'start'});};card.addEventListener('click',activate);card.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();activate()}})});$('resetFilters').addEventListener('click',()=>{overviewQuickFilter=null;document.querySelectorAll('.metric-clickable').forEach(m=>m.classList.remove('metric-selected'));$('search').value='';$('statusFilter').value='';$('modeFilter').value='';$('sortFilter').value='eta';render()});
